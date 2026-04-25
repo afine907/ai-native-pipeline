@@ -1,0 +1,16 @@
+{
+  "name": "ai-native-pipeline",
+  "version": "1.0.0",
+  "description": "AI Native开发流程自动化 - 需求到测试一键完成",
+  "author": {
+    "name": "Your Name",
+    "email": "your@email.com",
+    "url": "https://github.com/your-username"
+  },
+  "homepage": "https://github.com/your-username/ai-native-pipeline",
+  "repository": "https://github.com/your-username/ai-native-pipeline",
+  "license": "MIT",
+  "keywords": ["ai", "agent", "claude-code", "pipeline", "automation"],
+  "skills": ["./skills/pipeline/"],
+  "agents": ["./agents/"]
+}
