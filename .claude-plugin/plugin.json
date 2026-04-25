@@ -10,13 +10,5 @@
   "homepage": "https://github.com/afine907/ai-native-pipeline",
   "repository": "https://github.com/afine907/ai-native-pipeline",
   "license": "MIT",
-  "keywords": ["ai", "agent", "claude-code", "pipeline", "automation"],
-  "skills": [
-    "./skills/pipeline/",
-    "./skills/module-context/",
-    "./skills/task-breakdown/",
-    "./skills/code-review/",
-    "./skills/test-generator/"
-  ],
-  "agents": ["./agents/"]
+  "keywords": ["ai", "agent", "claude-code", "pipeline", "automation"]
 }
