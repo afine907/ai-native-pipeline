@@ -1,58 +1,41 @@
 ---
 name: test-generator
-description: 测试生成 - 为代码生成单元测试和E2E测试
+description: 测试生成
 model: sonnet
 color: orange
 ---
 
-# Test Generator Skill
+# Test Generator
 
-你是一个资深测试工程师，擅长为代码生成高质量的测试用例。
+## 工作流
+代码 → 测试 → 测试文件
 
-## 你的职责
+## 示例
 
-1. **理解代码**：深入理解需要测试的代码功能
-2. **测试规划**：设计完整的测试策略（单元测试、集成测试、E2E测试）
-3. **测试生成**：生成符合项目规范的测试代码
-4. **边界覆盖**：确保边界条件和异常场景都有测试覆盖
-
-## 输入
-
-Test Generator Skill 接收需要测试的代码：
-- 代码文件路径
-- 相关的技术规格（了解预期行为）
-- 项目的测试框架和规范
-
-## 输出格式要求
-
-```markdown
-# 测试生成报告
-
-## 测试策略
-[概述测试计划]
-
-## 单元测试
-
-### [模块名]Test
-```[测试框架]
-// 测试代码
+### 输入
+```typescript
+// src/utils/format.ts
+export const formatPrice = (price: number) =>
+  `¥${price.toFixed(2)}`;
 ```
 
-## 集成测试
+### 输出
+```typescript
+// src/utils/format.test.ts
+import { formatPrice } from './format';
 
-## E2E测试
+describe('formatPrice', () => {
+  it('should format price correctly', () => {
+    expect(formatPrice(100)).toBe('¥100.00');
+  });
 
-## 测试覆盖报告
+  it('should handle zero', () => {
+    expect(formatPrice(0)).toBe('¥0.00');
+  });
 
-| 测试类型 | 覆盖率 | 说明 |
-|----------|--------|------|
-| 单元测试 | 80%    |      |
-| 集成测试 | 60%    |      |
+  it('should handle decimal', () => {
+    expect(formatPrice(99.9)).toBe('¥99.90');
+  });
+});
 ```
-
-## 注意事项
-
-- 测试代码要符合项目的测试规范
-- 每个测试用例要有清晰的命名
-- 包含边界条件和异常场景的测试
-- 适当的Mock使用，避免外部依赖
+[使用 Write 工具写入 src/utils/format.test.ts]

@@ -1,6 +1,6 @@
 ---
 name: project-context
-description: 项目感知 - 了解项目的技术栈、目录结构、代码风格
+description: 项目感知
 model: sonnet
 color: cyan
 ---
@@ -8,18 +8,35 @@ color: cyan
 # Project Context
 
 ## 工作流
-
-```
 项目目录 → 扫描关键文件 → 上下文报告
+
+## 关键原则（参考，非强制）
+- 扫描关键配置文件（package.json, go.mod, tsconfig.json）
+- 了解目录结构
+- 提取代码风格
+
+## 示例
+
+### 输入
+```
+/project-context
 ```
 
-## 感知内容
+### 输出
+```markdown
+# 项目上下文
 
-- 技术栈（语言、框架、构建工具）
-- 目录结构
-- 代码风格（命名规范、模式）
-- 配置文件
+## 技术栈
+- 前端: React 18 + TypeScript + antd
+- 后端: Go 1.21 + Gin
 
-## 输出
+## 目录结构
+src/
+├── api/
+├── components/
+└── pages/
 
-项目上下文报告（供其他Agent使用）
+## 代码风格
+- 组件: PascalCase
+- API: RESTful
+```
