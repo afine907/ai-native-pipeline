@@ -11,6 +11,12 @@
   "repository": "https://github.com/your-username/ai-native-pipeline",
   "license": "MIT",
   "keywords": ["ai", "agent", "claude-code", "pipeline", "automation"],
-  "skills": ["./skills/pipeline/"],
+  "skills": [
+    "./skills/pipeline/",
+    "./skills/module-context/",
+    "./skills/task-breakdown/",
+    "./skills/code-review/",
+    "./skills/test-generator/"
+  ],
   "agents": ["./agents/"]
 }
