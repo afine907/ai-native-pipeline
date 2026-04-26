@@ -1,179 +1,162 @@
 # AI Native Pipeline
 
-Claude Code 插件 - 自动化AI Native开发全流程
+[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://claude.com/claude-code)
 
-## 功能简介
+> 用自然语言描述需求 → 自动输出可运行代码
+>
+> 支持全新项目开发 & 增量功能扩展
 
-这是一个AI Native开发流程自动化插件，包含4个核心Agent和1个Pipeline Skill，完整覆盖需求到代码的开发链路。
+---
 
-## 包含组件
+## ✨ 特性
 
-### Agents (4个核心Agent)
+- 🤖 **4 大 AI Agent** - 需求分析、技术规格、代码生成、代码审查
+- ⚡ **一键全流程** - 从需求到代码全自动
+- 🔄 **增量开发** - 自动分析现有模块，生成增量代码
+- 🎯 **精准代码生成** - 遵循项目规范，支持 React/TypeScript + Golang
+- 🛠️ **可扩展** - 支持代码审查、测试生成等扩展能力
 
-| Agent | 功能 | 使用方式 |
-|-------|------|----------|
-| `module-context` | 模块感知 - 了解目标模块的代码结构 | `/module-context` |
-| `prd-agent` | 需求分析 - 生成结构化PRD | `/prd-agent [需求描述]` |
-| `spec-agent` | 技术规格 - PRD转技术规格说明书 | `/spec-agent [PRD内容]` |
-| `coding-agent` | 代码生成 - 根据技术规格生成代码 | `/coding-agent [规格描述]` |
+---
 
-### Skills
+## 📦 安装
 
-| Skill | 功能 | 使用方式 |
-|-------|------|----------|
-| `pipeline` | 主流程编排 - 一键调用4个Agent | `/pipeline [需求描述]` |
-| `task-breakdown` | 任务拆解 - SPEC转执行计划 | `/task-breakdown [规格描述]` |
-| `code-review` | 代码审查 - 检查代码质量 | `/code-review [代码路径]` |
-| `test-generator` | 测试生成 - 单元测试/E2E测试 | `/test-generator [代码路径]` |
+### 方式一：在线安装（推荐）
 
-## 安装方式
+```bash
+/plugin install https://github.com/afine907/ai-native-pipeline.git
+/reload-plugins
+```
 
-> ⚠️ **注意**: 旧版本的手动复制方式已不再推荐，请使用以下官方支持的安装方式。
-
-### 方式一：Git 仓库安装（推荐）
+### 方式二：本地安装
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-repo/ai-native-pipeline.git
+git clone https://github.com/afine907/ai-native-pipeline.git
 
-# 使用 /plugin install 安装
+# 本地安装
 /plugin install ./ai-native-pipeline
-
-# 重新加载插件
 /reload-plugins
 ```
 
-### 方式二：本地路径安装
+安装完成后，执行 `/plugin` 验证是否出现 `ai-native-pipeline`
+
+---
+
+## 🚀 快速开始
+
+### 方式一：一键全流程（推荐）
 
 ```bash
-# 直接从本地路径安装
-/plugin install D:/path/to/ai-native-pipeline
-
-# 重新加载插件
-/reload-plugins
-```
-
-### 方式三：在线 Git 安装
-
-```bash
-# 直接从 Git 仓库安装（支持 GitHub、私有 Git 等）
-/plugin install https://github.com/your-repo/ai-native-pipeline.git
-
-# 重新加载插件
-/reload-plugins
-```
-
-## 验证安装
-
-安装完成后，执行以下命令验证是否安装成功：
-
-```bash
-/plugin
-```
-
-只要输出列表中出现 `ai-native-pipeline`，即表示安装成功。
-
-## 使用方法
-
-### 方式一：一键全流程
-
-```bash
+# 全新项目需求
 /pipeline 用户需要一个小程序，可以展示商品列表并下单
+
+# 增量需求（在已有项目中添加功能）
+/pipeline 在现有登录模块基础上，增加第三方登录（微信、Google）
 ```
 
-完整流程：`需求分析 → 技术规格 → 代码生成`
-
-### 方式二：单步使用
+### 方式二：分步使用
 
 ```bash
-# 1. 需求分析
-/prd-agent 用户需要一个登录功能
+# 第 1 步：需求分析
+/prd-agent 用户需要一个登录功能，包含用户名密码和验证码
 
-# 2. 技术规格（需要先有PRD）
-/spec-agent PRD内容...
+# 第 2 步：先分析现有模块（增量开发时）
+/module-context src/auth/
 
-# 3. 代码生成（需要先有技术规格）
-/coding-agent 技术规格描述...
+# 第 3 步：生成技术规格
+/spec-agent [粘贴上一步的 PRD 内容]
+
+# 第 4 步：代码生成
+/coding-agent [粘贴上一步的技术规格]
 ```
 
 ### 方式三：扩展能力
 
-完成核心流程后，可根据需要调用扩展技能：
-
 ```bash
-# 任务拆解与编排
-/task-breakdown
-
-# 代码审查
-/code-review src/main.ts
-
-# 测试生成
-/test-generator src/main.ts
+/code-review src/main.ts      # 代码审查
+/test-generator src/main.ts   # 生成测试
 ```
 
-## 工作流程
+---
+
+## 🔄 工作流
 
 ```
-用户需求
-    ↓
-Module Context (模块感知)
-    ↓
- PRD Agent (需求分析)
-    ↓
-SPEC Agent (技术规格)
-    ↓
-Coding Agent (代码生成)
-    ↓
-   完成 ✅
-
-# 可选扩展
-   ↓
-task-breakdown (任务拆解)
-code-review (代码审查)
-test-generator (测试生成)
+┌──────────┐    ┌──────────────┐    ┌─────────┐    ┌────────┐    ┌─────────┐
+│  用户需求  │───▶│ Module Context │───▶│ PRD Agent│───▶│ SPEC    │───▶│ Coding  │
+└──────────┘    └──────────────┘    └─────────┘    └────────┘    └─────────┘
+                                                                         │
+                                                                         ▼
+                                                                      完成 ✅
 ```
 
-## 项目结构
+> 💡 **增量开发**：Pipeline 自动先调用 Module Context 分析现有代码结构，再生成符合现有架构的增量代码
+
+---
+
+## 📂 项目结构
 
 ```
 ai-native-pipeline/
-├── agents/                    # 4个核心Agent
-│   ├── module-context.md      # 模块感知
+├── agents/                    # 4 个核心 Agent
+│   ├── module-context.md      # 模块感知（分析现有代码）
 │   ├── prd-agent.md           # 需求分析
 │   ├── spec-agent.md          # 技术规格
 │   └── coding-agent.md        # 代码生成
-├── skills/                    # 主流程Skill
-│   └── pipeline/              # 主流程编排
-├── rules/                     # 规范文档
-│   ├── api-spec-rules.md
-│   ├── acceptance-criteria-rules.md
-│   ├── frontend-coding-standards.md
-│   └── backend-coding-standards.md
+├── skills/pipeline/           # 主流程编排 Skill
+├── rules/                     # 编码规范
 ├── .claude-plugin/
-│   └── plugin.json
-└── CLAUDE.md
+│   └── plugin.json            # 插件配置
+└── CLAUDE.md                  # 项目说明
 ```
 
-## 适用场景
+---
 
-- 快速原型开发
-- 需求到代码一键落地
-- 学习AI Agent开发
-- 项目代码自动化生成
+## 🎯 使用场景
 
-## 技术栈
+| 场景 | 说明 |
+|------|------|
+| 🔵 全新项目 | 从 0 开始，快速生成完整功能模块 |
+| 🟢 增量开发 | 在现有项目中添加新功能，保持代码一致性 |
+| ⚡ 快速原型 | 几分钟内从想法到可运行代码 |
+| 📚 学习参考 | 学习 AI Agent 的最佳实践 |
 
-- 纯提示词工程，无需额外依赖
-- 支持多语言代码生成（React/TypeScript + Golang）
-- 遵循现有项目代码规范
+---
 
-## 注意事项
+## 📝 示例输出
 
-1. 首次生成需要较多token，后续会更快
-2. 代码生成后建议使用 `/code-review` 进行审查
-3. 测试用例需要根据实际情况调整
-4. 建议在测试项目中使用，验证后再应用到生产
+**全新项目输入：**
+```
+/pipeline 用户需要一个待办事项列表，包含增删改查功能
+```
 
-## License
+**增量需求输入：**
+```
+/pipeline 在现有用户模块中增加会员等级功能
+```
+
+**输出：**
+```
+✅ Module Context 已分析（现有代码结构）
+✅ PRD 已生成（用户故事、验收标准）
+✅ 技术规格已生成（API 接口、数据结构）
+✅ 代码已生成（组件、接口、数据库）
+```
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 PR！
+
+---
+
+## 📄 License
 
 MIT
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ by <a href="https://github.com/afine907">afine907</a></sub>
+</p>
