@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Claude Code plugin for AI Native development workflow automation. It contains 5 independent Agents and 1 Pipeline Skill that together automate the full development lifecycle from requirements to testing.
+This is a Claude Code plugin for AI Native development workflow automation. It contains 4 independent Agents and 1 Pipeline Skill that together automate the full development lifecycle from requirements to code.
 
 ## Project Structure
 
@@ -13,11 +13,10 @@ ai-native-pipeline/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin configuration
 ├── agents/
+│   ├── module-context.md        # Module context analysis
 │   ├── prd-agent.md             # Requirements analysis agent
-│   ├── task-agent.md            # Task breakdown agent
-│   ├── coding-agent.md          # Code generation agent
-│   ├── review-agent.md          # Code review agent
-│   └── test-agent.md            # Test generation agent
+│   ├── spec-agent.md            # Technical specification agent
+│   └── coding-agent.md          # Code generation agent
 └── skills/
     └── pipeline/
         └── SKILL.md             # Main pipeline orchestration skill
@@ -28,30 +27,28 @@ ai-native-pipeline/
 This is a Claude Code plugin - no build/test commands required. To use:
 
 ```bash
-# Full pipeline (runs all 5 agents in sequence)
+# Full pipeline (runs all 4 agents in sequence)
 /pipeline [requirement description]
 
 # Individual agents
+/module-context
 /prd-agent [requirement]
-/task-agent [PRD content]
+/spec-agent [PRD content]
 /coding-agent [task description]
-/review-agent [code path or content]
-/test-agent [code path]
 ```
 
 ## Architecture
 
-### Agents (5 independent)
+### Agents (4 independent)
+- **module-context**: Analyzes existing module structure for incremental development
 - **prd-agent**: Converts user requirements into structured PRD documents (user stories, feature list, acceptance criteria)
-- **task-agent**: Breaks down PRD into executable technical tasks with dependencies and priorities
-- **coding-agent**: Generates high-quality code based on tasks, follows project conventions
-- **review-agent**: Reviews generated code for correctness, security, performance, best practices
-- **test-agent**: Generates unit tests and E2E tests for the code
+- **spec-agent**: Converts PRD into detailed technical specifications
+- **coding-agent**: Generates high-quality code based on specs, follows project conventions
 
 ### Pipeline Skill
-The `pipeline` skill orchestrates all 5 agents in sequence:
+The `pipeline` skill orchestrates all 4 agents in sequence:
 ```
-User Requirement → PRD Agent → Task Agent → Coding Agent → Review Agent → Test Agent → Complete
+User Requirement → Module Context → PRD Agent → Spec Agent → Coding Agent → Complete
 ```
 
 Each agent is defined with frontmatter specifying:
