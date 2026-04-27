@@ -16,6 +16,11 @@ NC='\033[0m'
 PLUGIN_NAME="ai-native-pipeline"
 UNINSTALL_MODE="global"
 
+# 要删除的组件列表
+SKILLS_TO_REMOVE="pipeline task-breakdown code-review test-generator"
+AGENTS_TO_REMOVE="impact-analyzer.md prd-agent.md spec-agent.md coding-agent.md verification-agent.md"
+RULES_TO_REMOVE="task-spec-template.md api-spec-rules.md acceptance-criteria-rules.md frontend-coding-standards.md backend-coding-standards.md tdd-pattern.md user-story-template.md non-functional-requirements.md"
+
 # 检测操作系统
 detect_os() {
     case "$(uname -s)" in
@@ -53,10 +58,95 @@ print_help() {
     echo "  -a, --all         卸载全部（全局 + 项目级）"
     echo "  -h, --help        显示帮助信息"
     echo ""
-    echo -e "${BLUE}示例:${NC}"
-    echo "  $0                # 卸载全局安装"
-    echo "  $0 --project      # 卸载当前目录的项目级安装"
-    echo "  $0 --all          # 卸载全部"
+    echo -e "${GREEN}注意: 卸载只删除 ai-native-pipeline 的组件，不会影响其他 skills/agents${NC}"
+    echo ""
+}
+
+# 检查是否有其他文件
+check_other_files() {
+    local target_dir="$1"
+    local other_skills=0
+    local other_agents=0
+    local other_rules=0
+    
+    if [ -d "$target_dir/skills" ]; then
+        for skill_dir in "$target_dir/skills"/*/; do
+            if [ -d "$skill_dir" ]; then
+                skill_name=$(basename "$skill_dir")
+                if [[ ! " $SKILLS_TO_REMOVE " =~ " $skill_name " ]]; then
+                    other_skills=$((other_skills + 1))
+                fi
+            fi
+        done
+    fi
+    
+    if [ -d "$target_dir/agents" ]; then
+        for agent_file in "$target_dir/agents"/*.md; do
+            if [ -f "$agent_file" ]; then
+                agent_name=$(basename "$agent_file")
+                if [[ ! " $AGENTS_TO_REMOVE " =~ " $agent_name " ]]; then
+                    other_agents=$((other_agents + 1))
+                fi
+            fi
+        done
+    fi
+    
+    if [ -d "$target_dir/rules" ]; then
+        for rule_file in "$target_dir/rules"/*.md; do
+            if [ -f "$rule_file" ]; then
+                rule_name=$(basename "$rule_file")
+                if [[ ! " $RULES_TO_REMOVE " =~ " $rule_name " ]]; then
+                    other_rules=$((other_rules + 1))
+                fi
+            fi
+        done
+    fi
+    
+    if [ $other_skills -gt 0 ] || [ $other_agents -gt 0 ] || [ $other_rules -gt 0 ]; then
+        echo -e "${GREEN}发现其他组件（将保留）:${NC}"
+        [ $other_skills -gt 0 ] && echo -e "  ${GREEN}✓${NC} $other_skills 个其他 skills"
+        [ $other_agents -gt 0 ] && echo -e "  ${GREEN}✓${NC} $other_agents 个其他 agents"
+        [ $other_rules -gt 0 ] && echo -e "  ${GREEN}✓${NC} $other_rules 个其他 rules"
+        echo ""
+    fi
+}
+
+# 显示将要删除的文件
+show_files_to_remove() {
+    local target_dir="$1"
+    
+    echo -e "${YELLOW}将要删除的组件:${NC}"
+    echo ""
+    
+    echo -e "  ${BLUE}Skills:${NC}"
+    for skill in $SKILLS_TO_REMOVE; do
+        if [ -d "$target_dir/skills/$skill" ]; then
+            echo -e "    ${RED}✗${NC} $skill"
+        else
+            echo -e "    ${GREEN}✓${NC} $skill (未安装)"
+        fi
+    done
+    
+    echo ""
+    echo -e "  ${BLUE}Agents:${NC}"
+    for agent in $AGENTS_TO_REMOVE; do
+        if [ -f "$target_dir/agents/$agent" ]; then
+            echo -e "    ${RED}✗${NC} $agent"
+        else
+            echo -e "    ${GREEN}✓${NC} $agent (未安装)"
+        fi
+    done
+    
+    echo ""
+    echo -e "  ${BLUE}Rules:${NC}"
+    for rule in $RULES_TO_REMOVE; do
+        if [ -f "$target_dir/rules/$rule" ]; then
+            echo -e "    ${RED}✗${NC} $rule"
+        else
+            echo -e "    ${GREEN}✓${NC} $rule (未安装)"
+        fi
+    done
+    
     echo ""
 }
 
@@ -67,38 +157,48 @@ do_uninstall() {
     
     if [ ! -d "$target_dir" ]; then
         echo -e "${YELLOW}目录不存在: $target_dir${NC}"
-        return 1
+        return 0
     fi
     
     echo -e "${BLUE}卸载模式: $mode${NC}"
     echo -e "${BLUE}目标目录: $target_dir${NC}"
     echo ""
     
+    # 检查其他文件
+    check_other_files "$target_dir"
+    
+    # 显示要删除的文件
+    show_files_to_remove "$target_dir"
+    
     # 删除 skills
     echo -e "${YELLOW}删除 Skills...${NC}"
-    rm -rf "$target_dir/skills/pipeline" 2>/dev/null && echo "  ✓ pipeline" || true
-    rm -rf "$target_dir/skills/task-breakdown" 2>/dev/null && echo "  ✓ task-breakdown" || true
-    rm -rf "$target_dir/skills/code-review" 2>/dev/null && echo "  ✓ code-review" || true
-    rm -rf "$target_dir/skills/test-generator" 2>/dev/null && echo "  ✓ test-generator" || true
+    for skill in $SKILLS_TO_REMOVE; do
+        if [ -d "$target_dir/skills/$skill" ]; then
+            rm -rf "$target_dir/skills/$skill" 2>/dev/null && echo "  ✓ 删除 $skill" || echo "  ✗ 删除 $skill 失败"
+        else
+            echo "  - $skill (不存在)"
+        fi
+    done
     
     # 删除 agents
     echo -e "${YELLOW}删除 Agents...${NC}"
-    rm -f "$target_dir/agents/impact-analyzer.md" 2>/dev/null && echo "  ✓ impact-analyzer.md" || true
-    rm -f "$target_dir/agents/prd-agent.md" 2>/dev/null && echo "  ✓ prd-agent.md" || true
-    rm -f "$target_dir/agents/spec-agent.md" 2>/dev/null && echo "  ✓ spec-agent.md" || true
-    rm -f "$target_dir/agents/coding-agent.md" 2>/dev/null && echo "  ✓ coding-agent.md" || true
-    rm -f "$target_dir/agents/verification-agent.md" 2>/dev/null && echo "  ✓ verification-agent.md" || true
+    for agent in $AGENTS_TO_REMOVE; do
+        if [ -f "$target_dir/agents/$agent" ]; then
+            rm -f "$target_dir/agents/$agent" 2>/dev/null && echo "  ✓ 删除 $agent" || echo "  ✗ 删除 $agent 失败"
+        else
+            echo "  - $agent (不存在)"
+        fi
+    done
     
     # 删除 rules
     echo -e "${YELLOW}删除 Rules...${NC}"
-    rm -f "$target_dir/rules/task-spec-template.md" 2>/dev/null && echo "  ✓ task-spec-template.md" || true
-    rm -f "$target_dir/rules/api-spec-rules.md" 2>/dev/null && echo "  ✓ api-spec-rules.md" || true
-    rm -f "$target_dir/rules/acceptance-criteria-rules.md" 2>/dev/null && echo "  ✓ acceptance-criteria-rules.md" || true
-    rm -f "$target_dir/rules/frontend-coding-standards.md" 2>/dev/null && echo "  ✓ frontend-coding-standards.md" || true
-    rm -f "$target_dir/rules/backend-coding-standards.md" 2>/dev/null && echo "  ✓ backend-coding-standards.md" || true
-    rm -f "$target_dir/rules/tdd-pattern.md" 2>/dev/null && echo "  ✓ tdd-pattern.md" || true
-    rm -f "$target_dir/rules/user-story-template.md" 2>/dev/null && echo "  ✓ user-story-template.md" || true
-    rm -f "$target_dir/rules/non-functional-requirements.md" 2>/dev/null && echo "  ✓ non-functional-requirements.md" || true
+    for rule in $RULES_TO_REMOVE; do
+        if [ -f "$target_dir/rules/$rule" ]; then
+            rm -f "$target_dir/rules/$rule" 2>/dev/null && echo "  ✓ 删除 $rule" || echo "  ✗ 删除 $rule 失败"
+        else
+            echo "  - $rule (不存在)"
+        fi
+    done
     
     echo ""
 }
@@ -137,9 +237,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 确认卸载
+# 显示卸载信息
 echo -e "${BLUE}即将卸载: ${YELLOW}$UNINSTALL_MODE${NC}"
 echo ""
+echo -e "${GREEN}⚠ 此操作只删除 ai-native-pipeline 的组件${NC}"
+echo -e "${GREEN}⚠ 其他 skills/agents/rules 将保留${NC}"
+echo ""
+
+# 确认卸载
 read -p "确定要继续吗？(y/N) " -n 1 -r
 echo ""
 
@@ -167,4 +272,5 @@ esac
 
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}  卸载完成！${NC}"
+echo -e "${GREEN}  其他组件已保留${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
