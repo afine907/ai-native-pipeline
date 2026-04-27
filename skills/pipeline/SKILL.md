@@ -155,11 +155,106 @@ Step4 完成后 → [PAUSE] 用户确认代码改动 → 继续 Step5
 ✅ 所有验收标准通过
 ```
 
+## Task Breakdown 自动集成
+
+当 SPEC 复杂度高时，自动触发任务拆解。
+
+### 复杂度判断标准
+
+| 条件 | 阈值 | 说明 |
+|------|------|------|
+| API 数量 | > 3 | 接口多，需拆解 |
+| 涉及模块 | > 2 | 跨模块，需协调 |
+| 前后端 | 都有 | 可并行开发 |
+
+### 集成流程
+
+```
+Step3: spec-agent → 03-spec.md
+           │
+           ▼
+    ┌─────────────────┐
+    │ 复杂度判断      │
+    └────────┬────────┘
+             │
+        ┌────┴────┐
+       简单       复杂
+        │          │
+        ▼          ▼
+  coding-agent  task-breakdown
+        │          │
+        │    拆解任务列表
+        │          │
+        │          ▼
+        │    按阶段执行
+        │    阶段1 → 阶段2 → ...
+        │          │
+        │          ▼
+        │    逐任务: coding-agent
+        │          │
+        │          ▼
+        │    逐任务: verification
+        ▼
+verification-agent
+```
+
+### 示例：复杂任务自动拆解
+
+**输入**: 用户登录模块（5 个 API，前后端都有）
+
+**Step3.5: 自动触发 task-breakdown**
+```
+[Step3.5] task-breakdown (自动触发)
+  ← 读取: 03-spec.md
+  → 复杂度判断: 高 (API=5, 前后端)
+  → 生成: 03.5-task-breakdown.md
+  
+  任务拆解:
+  | ID | 任务 | 依赖 | 执行 |
+  |----|------|------|------|
+  | T1 | 后端 - 登录 API | - | 并行 |
+  | T2 | 后端 - 验证码 API | - | 并行 |
+  | T3 | 后端 - 用户信息 API | T1 | 串行 |
+  | T4 | 前端 - 登录页 | - | 并行 |
+  | T5 | 前端 - API 调用 | T1,T2 | 串行 |
+  
+  执行计划:
+  - 阶段1（并行）: T1, T2, T4
+  - 阶段2（串行）: T3 → T5
+
+[阶段1] 并行执行 T1, T2, T4
+  T1: coding-agent → verification-agent → ✅
+  T2: coding-agent → verification-agent → ✅
+  T4: coding-agent → verification-agent → ✅
+
+[阶段2] 串行执行 T3 → T5
+  T3: coding-agent → verification-agent → ✅
+  T5: coding-agent → verification-agent → ✅
+```
+
+### 会话文件结构（复杂任务）
+
+```
+.harness/sessions/session-{timestamp}/
+├── 00-impact-map.md
+├── 01-task-spec.md
+├── 02-prd.md
+├── 03-spec.md
+├── 03.5-task-breakdown.md    # 任务拆解（复杂任务）
+├── 04-code/
+│   ├── T1-login-api.md
+│   ├── T2-sms-api.md
+│   └── ...
+├── 05-verification/
+│   ├── T1-verification.md
+│   └── ...
+└── meta.json
+```
+
 ## 后续扩展
 
-- `/task-breakdown` - 任务拆解
-- `/code-review` - 代码审查
-- `/test-generator` - 测试生成
+- `/code-review` - 代码审查（verification 后可选）
+- `/test-generator` - 测试生成（coding-agent 内置引用）
 - `/feedback-log` - 错误反馈学习
 
 ## Harness Engineering 原则
