@@ -1,96 +1,187 @@
 # AI Native Pipeline
 
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://claude.com/claude-code)
+[![Harness Engine](https://img.shields.io/badge/Harness-Engine-purple)](https://openai.com/index/harness-engineering/)
 
-> 用自然语言描述需求 → 自动输出可运行代码
+> 从需求到代码，全自动 AI 开发流水线
 >
-> 支持全新项目开发 & 增量功能扩展
+> 基于 Harness Engineering 最佳实践，支持增量开发 & 自动验证
 
 ---
 
 ## ✨ 特性
 
-- 🤖 **4 大 AI Agent** - 需求分析、技术规格、代码生成、代码审查
-- ⚡ **一键全流程** - 从需求到代码全自动
-- 🔄 **增量开发** - 自动分析现有模块，生成增量代码
-- 🎯 **精准代码生成** - 遵循项目规范，支持 React/TypeScript + Golang
-- 🛠️ **可扩展** - 支持代码审查、测试生成等扩展能力
+### 🎯 Harness Engine 核心能力
+
+| 能力 | 说明 |
+|------|------|
+| **Impact Map First** | 任务执行前自动分析代码影响范围 |
+| **Structured Task Spec** | 标准化任务规格，减少歧义和错误假设 |
+| **Planning Gate** | 关键节点人工确认，捕获错误于编码前 |
+| **Auto Verification** | 自动运行测试、Lint、类型检查等验收标准 |
+| **Task Breakdown** | 复杂任务自动拆解，支持并行/串行执行 |
+
+### 🤖 5 大 AI Agent
+
+| Agent | 职责 |
+|-------|------|
+| `impact-analyzer` | 代码影响分析，生成 Impact Map |
+| `prd-agent` | 需求分析，输出 Task Spec + PRD |
+| `spec-agent` | 技术规格设计，API + 数据模型 |
+| `coding-agent` | 代码实现，TDD 模式 |
+| `verification-agent` | 验收标准验证 |
+
+### 🛠️ 扩展能力
+
+- `task-breakdown` - 复杂任务拆解与编排
+- `code-review` - 代码审查
+- `test-generator` - 测试生成
 
 ---
 
 ## 📦 安装
 
-### 方式一：在线安装（推荐）
-
 ```bash
+# 在线安装
 /plugin install https://github.com/afine907/ai-native-pipeline.git
 /reload-plugins
+
+# 验证安装
+/plugin
 ```
-
-### 方式二：本地安装
-
-```bash
-# 克隆仓库
-git clone https://github.com/afine907/ai-native-pipeline.git
-
-# 本地安装
-/plugin install ./ai-native-pipeline
-/reload-plugins
-```
-
-安装完成后，执行 `/plugin` 验证是否出现 `ai-native-pipeline`
 
 ---
 
 ## 🚀 快速开始
 
-### 方式一：一键全流程（推荐）
+### 一键全流程
 
 ```bash
-# 全新项目需求
-/pipeline 用户需要一个小程序，可以展示商品列表并下单
+# 增量开发：在现有项目中添加功能
+/pipeline 在现有登录模块基础上，增加 JWT 认证
 
-# 增量需求（在已有项目中添加功能）
-/pipeline 在现有登录模块基础上，增加第三方登录（微信、Google）
+# 全新项目
+/pipeline 用户需要一个待办事项应用，包含增删改查功能
 ```
 
-### 方式二：分步使用
+### 执行过程
 
-```bash
-# 第 1 步：需求分析
-/prd-agent 用户需要一个登录功能，包含用户名密码和验证码
-
-# 第 2 步：先分析现有模块（增量开发时）
-/module-context src/auth/
-
-# 第 3 步：生成技术规格
-/spec-agent [粘贴上一步的 PRD 内容]
-
-# 第 4 步：代码生成
-/coding-agent [粘贴上一步的技术规格]
 ```
+[创建] .harness/sessions/session-20260427-120000/
 
-### 方式三：扩展能力
+[Step1] impact-analyzer
+  → 分析代码影响
+  → 写入: 00-impact-map.md
+  
+  Impact Map:
+  - Core Files: src/auth/session.py, src/auth/middleware.py
+  - Dependent Files: src/api/routes/*.py (12 callers)
+  - Boundary: src/payments/, src/admin/auth.py
 
-```bash
-/code-review src/main.ts      # 代码审查
-/test-generator src/main.ts   # 生成测试
+[Step2] prd-agent
+  → 生成任务规格和 PRD
+  → 写入: 01-task-spec.md, 02-prd.md
+  
+  [PAUSE] 等待用户确认任务规格
+  用户输入: [APPROVED]
+
+[Step3] spec-agent
+  → 设计技术规格
+  → 写入: 03-spec.md
+
+[Step4] coding-agent
+  → 实现代码（TDD 模式）
+  → 写入: 04-code.md
+  
+  [PAUSE] 等待用户确认代码改动
+  用户输入: [APPROVED]
+
+[Step5] verification-agent
+  → 执行验收标准验证
+  → 写入: 05-verification.md
+  
+  Results:
+  | Check | Status |
+  |-------|--------|
+  | pytest tests/auth/ | ✅ Pass |
+  | ruff check src/auth/ | ✅ Pass |
+  | grep "Session" src/auth/ | ✅ Pass |
 ```
 
 ---
 
 ## 🔄 工作流
 
+### 完整流程
+
 ```
-┌──────────┐    ┌──────────────┐    ┌─────────┐    ┌────────┐    ┌─────────┐
-│  用户需求  │───▶│ Module Context │───▶│ PRD Agent│───▶│ SPEC    │───▶│ Coding  │
-└──────────┘    └──────────────┘    └─────────┘    └────────┘    └─────────┘
-                                                                         │
-                                                                         ▼
-                                                                      完成 ✅
+用户需求
+    │
+    ▼
+┌─────────────────┐
+│ impact-analyzer │ ← 代码影响分析
+└────────┬────────┘
+         │ 00-impact-map.md
+         ▼
+┌─────────────────┐
+│   prd-agent     │ ← 需求分析
+└────────┬────────┘
+         │ 01-task-spec.md + 02-prd.md
+         │ [PAUSE] Planning Gate
+         ▼
+┌─────────────────┐
+│   spec-agent    │ ← 技术规格
+└────────┬────────┘
+         │ 03-spec.md
+         ▼
+┌─────────────────┐
+│ 复杂度判断      │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+   简单       复杂
+    │          │
+    ▼          ▼
+coding-agent  task-breakdown
+    │          │
+    │     按阶段执行
+    │          │
+    ▼          ▼
+┌─────────────────┐
+│ verification    │ ← 自动验证
+│   -agent        │
+└────────┬────────┘
+         │
+         ▼
+    完成 ✅
 ```
 
-> 💡 **增量开发**：Pipeline 自动先调用 Module Context 分析现有代码结构，再生成符合现有架构的增量代码
+### Planning Gate
+
+在关键节点设置人工确认：
+- **Step2 后**：确认任务规格（Scope、Acceptance Criteria）
+- **Step4 后**：确认代码改动
+
+用户输入：
+- `[APPROVED]` - 继续执行
+- `[REJECTED: 反馈内容]` - 返回重做
+
+### Task Breakdown 自动触发
+
+当 SPEC 复杂度高时（API > 3 或跨模块或前后端都有），自动触发任务拆解：
+
+```
+任务拆解:
+| ID | 任务 | 依赖 | 执行 |
+|----|------|------|------|
+| T1 | 后端 - 登录 API | - | 并行 |
+| T2 | 后端 - 验证码 API | - | 并行 |
+| T3 | 前端 - 登录页 | - | 并行 |
+
+执行计划:
+- 阶段1（并行）: T1, T2, T3
+- 阶段2（串行）: T4 → T5
+```
 
 ---
 
@@ -98,16 +189,31 @@ git clone https://github.com/afine907/ai-native-pipeline.git
 
 ```
 ai-native-pipeline/
-├── agents/                    # 4 个核心 Agent
-│   ├── module-context.md      # 模块感知（分析现有代码）
+├── agents/                    # 5 个核心 Agent
+│   ├── impact-analyzer.md     # 代码影响分析（整合 module-context）
 │   ├── prd-agent.md           # 需求分析
 │   ├── spec-agent.md          # 技术规格
-│   └── coding-agent.md        # 代码生成
-├── skills/pipeline/           # 主流程编排 Skill
+│   ├── coding-agent.md        # 代码生成
+│   └── verification-agent.md  # 验收验证
+│
+├── skills/                    # 4 个 Skill
+│   ├── pipeline/              # 主流程编排
+│   ├── task-breakdown/        # 任务拆解
+│   ├── code-review/           # 代码审查
+│   └── test-generator/        # 测试生成
+│
 ├── rules/                     # 编码规范
-├── .claude-plugin/
-│   └── plugin.json            # 插件配置
-└── CLAUDE.md                  # 项目说明
+│   ├── task-spec-template.md  # 任务规格模板
+│   ├── api-spec-rules.md      # API 规范
+│   ├── frontend-coding-standards.md
+│   ├── backend-coding-standards.md
+│   └── ...
+│
+├── wiki/                      # 文档
+│   └── harness-engine-upgrade-prd.md
+│
+└── .claude-plugin/
+    └── plugin.json
 ```
 
 ---
@@ -117,31 +223,56 @@ ai-native-pipeline/
 | 场景 | 说明 |
 |------|------|
 | 🔵 全新项目 | 从 0 开始，快速生成完整功能模块 |
-| 🟢 增量开发 | 在现有项目中添加新功能，保持代码一致性 |
+| 🟢 增量开发 | 在现有项目中添加新功能，自动分析影响范围 |
 | ⚡ 快速原型 | 几分钟内从想法到可运行代码 |
-| 📚 学习参考 | 学习 AI Agent 的最佳实践 |
+| 🔄 重构迁移 | 自动分析依赖关系，确保不破坏现有功能 |
 
 ---
 
-## 📝 示例输出
+## 📝 会话文件结构
 
-**全新项目输入：**
+每次执行会保存完整的会话记录：
+
 ```
-/pipeline 用户需要一个待办事项列表，包含增删改查功能
+.harness/sessions/session-{timestamp}/
+├── 00-impact-map.md      # 代码影响分析
+├── 01-task-spec.md       # 任务规格
+├── 02-prd.md             # PRD 文档
+├── 03-spec.md            # 技术规格
+├── 04-code.md            # 代码实现
+├── 05-verification.md    # 验证结果
+└── meta.json             # 元数据
 ```
 
-**增量需求输入：**
-```
-/pipeline 在现有用户模块中增加会员等级功能
+---
+
+## 🔧 单独使用 Agent
+
+```bash
+# 代码影响分析
+/impact-analyzer 在用户模块增加手机号登录
+
+# 需求分析
+/prd-agent 用户需要一个商品列表页
+
+# 验收验证
+/verification-agent
+
+# 任务拆解
+/task-breakdown
 ```
 
-**输出：**
-```
-✅ Module Context 已分析（现有代码结构）
-✅ PRD 已生成（用户故事、验收标准）
-✅ 技术规格已生成（API 接口、数据结构）
-✅ 代码已生成（组件、接口、数据库）
-```
+---
+
+## 📖 Harness Engineering 原则
+
+本项目遵循 [Harness Engineering](https://openai.com/index/harness-engineering/) 最佳实践：
+
+1. **Impact Map First** - 先分析代码影响，再开始编码
+2. **Structured Task Spec** - 标准化任务规格，减少歧义
+3. **Planning Gate** - 关键节点人工确认，捕获错误假设
+4. **Auto Verification** - 自动验证验收标准，确保质量
+5. **Feedback Loop** - 记录错误，持续改进 Harness
 
 ---
 
