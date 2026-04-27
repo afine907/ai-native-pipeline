@@ -130,7 +130,7 @@ install_skills() {
                 skill_name=$(basename "$skill_dir")
                 cp -r "$skill_dir" "$target_dir/skills/"
                 echo -e "  ${GREEN}✓${NC} skill: $skill_name"
-                ((count++))
+                count=$((count + 1))
             fi
         done
     fi
@@ -154,7 +154,7 @@ install_agents() {
                 agent_name=$(basename "$agent_file")
                 cp "$agent_file" "$target_dir/agents/"
                 echo -e "  ${GREEN}✓${NC} agent: $agent_name"
-                ((count++))
+                count=$((count + 1))
             fi
         done
     fi
@@ -178,7 +178,7 @@ install_rules() {
                 rule_name=$(basename "$rule_file")
                 cp "$rule_file" "$target_dir/rules/"
                 echo -e "  ${GREEN}✓${NC} rule: $rule_name"
-                ((count++))
+                count=$((count + 1))
             fi
         done
     fi
@@ -375,7 +375,7 @@ main() {
     echo ""
     
     # 检查现有安装
-    check_existing "$target_dir"
+    check_existing "$target_dir" || true
     
     # 创建目录
     create_directories "$target_dir"
