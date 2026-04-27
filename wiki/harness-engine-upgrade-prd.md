@@ -1,301 +1,214 @@
-# PRD: AI Native Pipeline → Harness Engine 升级
+# PRD: AI Native Pipeline - 后续迭代计划
 
-> 基于 Claude Code 已有能力，补充 Harness Engineering 核心能力
-
----
-
-## Claude Code 已有能力（不重复）
-
-| 能力 | Claude Code 实现 | 状态 |
-|------|------------------|------|
-| Skills / Commands | ✅ 已有 | 直接使用 |
-| Agents 机制 | ✅ 已有 | 直接使用 |
-| Planning Mode | ✅ `--plan` 参数 | 直接使用 |
-| Hooks | ✅ PreToolUse / PostToolUse | 直接使用 |
-| MCP 集成 | ✅ 已有 | 直接使用 |
-| AGENTS.md 规范 | ✅ 已有 | 直接使用 |
+> 当前版本 v1.0 已实现核心 Harness Engine 能力，本文档记录后续迭代方向
 
 ---
 
-## 需要补充的核心能力
+## v1.0 已完成 ✅
 
-### P0 - 必须实现
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| impact-analyzer | 代码影响分析，生成 Impact Map | ✅ |
+| verification-agent | 验收标准验证（测试/lint/grep） | ✅ |
+| task-spec-template | 标准化任务规格模板 | ✅ |
+| task-breakdown | 复杂任务自动拆解 | ✅ |
+| Planning Gate | 关键节点人工确认 | ✅ |
+| install.sh | 一键安装脚本（支持全局/项目级） | ✅ |
 
-#### 1. Repository Impact Map（代码影响分析）
+---
 
-**问题**: Agent 不了解代码结构，容易产生文件路径幻觉
+## v1.1 待实现 - 错误学习闭环
 
-**解决方案**: 任务执行前，运行符号分析，生成结构化上下文
+### US-006: Feedback Log（错误学习机制）
 
-**实现**:
-```bash
-# 新增 Skill: /impact-map
-# 调用 ctags / tree-sitter 分析代码
-# 输出 Impact Map 供 Agent 参考
-```
+**问题**: 重复犯同样错误，无学习改进机制
+
+**解决方案**: 记录错误 → 归因分类 → 生成改进建议
 
 **输出格式**:
 ```markdown
-## Impact Map: JWT Migration
+# Feedback Log
 
-### Core Files (可修改)
-- `src/auth/session.py` - SessionManager (4 methods)
-- `src/auth/middleware.py` - authenticate() (12 callers)
+## 错误记录
 
-### Dependent Files (不可破坏)
-- `src/api/routes/*.py` - imports authenticate
-- `tests/auth/` - 23 tests
+| 时间 | 任务 | 错误描述 | 分类 | 改进建议 |
+|------|------|----------|------|----------|
+| 2026-04-27 | JWT迁移 | 使用了 python-jose 而非 PyJWT | pattern缺失 | 在 task-spec 中明确指定库名 |
+| 2026-04-27 | 登录模块 | 文件路径错误 | impact不完整 | 增强 impact-analyzer 的依赖分析 |
 
-### Patterns (参考)
-- `src/api_keys/jwt_util.py` - JWT pattern
+## 错误分类统计
+
+| 分类 | 次数 | 占比 |
+|------|------|------|
+| pattern缺失 | 5 | 35% |
+| impact不完整 | 3 | 21% |
+| 验收标准模糊 | 4 | 29% |
+| 其他 | 2 | 15% |
+
+## 改进建议
+
+### 高优先级
+1. 在 task-spec-template 中增加 "Pattern to Follow" 的必填提示
+2. impact-analyzer 增加传递依赖分析
 ```
-
----
-
-#### 2. Acceptance Criteria 验证器
-
-**问题**: 任务完成后无自动验证，依赖人工检查
-
-**解决方案**: 在 `coding-agent` 后自动运行验证
 
 **实现**:
-```markdown
-# 新增 Agent: verification-agent.md
+- 新增 `skills/feedback-log/SKILL.md`
+- 在 verification 失败时提示记录反馈
+- 支持手动记录：`/feedback-log 记录一次错误：xxx`
+
+**工作量**: 1 天
 
 ---
-name: verification-agent
-description: 验证代码改动是否符合验收标准
-tools: Read, Bash
----
 
-# 验证流程
+## v1.2 待实现 - 系统集成
 
-1. 读取验收标准
-2. 执行验证命令
-3. 输出验证结果
-```
+### US-007: MCP 集成示例
 
-**验证类型**:
+**问题**: 无法获取实时系统状态（CI、部署、日志）
+
+**解决方案**: 通过 MCP 连接外部系统
+
+**集成目标**:
+
+| 系统 | 用途 | 触发场景 |
+|------|------|----------|
+| GitHub Actions | CI 状态、失败日志 | 调试任务开始前 |
+| 部署系统 | 当前版本、部署状态 | 重构任务 |
+| 日志系统 | 错误日志、堆栈 | Bug 修复任务 |
+| 监控系统 | 性能指标、告警 | 性能优化任务 |
+
+**示例 - CI 状态检查**:
 ```yaml
-verifications:
-  - type: test
-    command: pytest tests/ -v
-    expect: exit 0
-  
-  - type: lint
-    command: ruff check src/
-    expect: exit 0
-  
-  - type: grep
-    pattern: "Session"
-    path: src/auth/
-    expect: empty
+# 调试任务开始前自动检查 CI
+if task.type == "debug":
+  ci_status = mcp.call("github-actions", "get_workflow_run", {branch: current_branch})
+  if ci_status.status == "failure":
+    logs = mcp.call("github-actions", "get_logs", {run_id: ci_status.id})
+    context.add("CI已在失败状态，错误日志：\n" + logs)
 ```
+
+**工作量**: 2-3 天
 
 ---
 
-#### 3. Feedback Log（错误归因）
+### US-008: code-review 集成
 
-**问题**: 重复犯同样的错误，没有学习机制
+**当前**: code-review skill 独立存在
 
-**解决方案**: 记录错误 → 分类 → 改进 Harness
-
-**实现**:
-```markdown
-# 新增文件: .harness/feedback-log.md
-
-## Error Log
-
-| 时间 | 任务 | 错误 | 分类 | 改进 |
-|------|------|------|------|------|
-| 2026-04-27 | JWT迁移 | 用了 python-jose | pattern 缺失 | 添加 JWT pattern 引用 |
-| 2026-04-27 | 登录模块 | 文件路径错误 | impact 不完整 | 添加到符号分析 |
-```
-
----
-
-### P1 - 增强体验
-
-#### 4. Task Spec Template（任务规格模板）
-
-**问题**: 任务描述模糊导致错误假设
-
-**解决方案**: 标准化任务输入格式
-
-**模板**:
-```markdown
-## Task: [任务名称]
-
-### Scope
-- Files to modify: [...]
-- Files to read (不修改): [...]
-- Boundary (不可触碰): [...]
-
-### Pattern to follow
-- 参考: `path/to/existing/pattern.py`
-
-### Acceptance Criteria
-- [ ] pytest tests/ -v 通过
-- [ ] 无 lint 错误
-- [ ] 文档已更新
-
-### Out of Scope
-- [...]
-```
-
----
-
-#### 5. Session State（会话状态）
-
-**问题**: 中断后无法恢复
-
-**解决方案**: 利用 Claude Code 的 memory 机制
-
-**实现**:
-```markdown
-# .harness/sessions/{timestamp}/
-├── impact-map.md
-├── plan.md
-├── verification-result.md
-└── feedback.md
-```
-
----
-
-## 最小实现（MVP）
-
-只需补充 **2 个核心组件**：
+**改进**: 集成到 pipeline 流程
 
 ```
-ai-native-pipeline/
-├── agents/
-│   ├── impact-analyzer.md     # 新增：代码影响分析
-│   ├── verification-agent.md  # 新增：验收验证
-│   ├── prd-agent.md
-│   ├── spec-agent.md
-│   └── coding-agent.md
-│
-├── skills/
-│   └── pipeline/
-│       └── SKILL.md           # 更新：集成新 Agent
-│
-└── rules/
-    └── task-spec-template.md  # 新增：任务规格模板
-```
-
----
-
-## 更新后的 Pipeline 流程
-
-```
-用户需求
+verification-agent 
     │
     ▼
 ┌─────────────────┐
-│ impact-analyzer │ ← 新增：符号分析
+│ 结果判断        │
 └────────┬────────┘
          │
-         ▼
-┌─────────────────┐
-│   prd-agent     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   spec-agent    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  coding-agent   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ verification    │ ← 新增：自动验证
-│   -agent        │
-└────────┬────────┘
-         │
-         ▼
-    完成 ✅
+    ┌────┴────┐
+   通过       失败
+    │          │
+    ▼          ▼
+code-review  停止，修复
+(可选)
 ```
 
----
-
-## 用户故事
-
-### US-001: 代码影响分析
-**作为** 开发者，**我希望** 任务开始前自动分析代码影响，**以便** 避免文件路径幻觉。
-
-**验收标准**:
-- [ ] 新增 `/impact-analyzer` agent
-- [ ] 输出 Core Files / Dependent Files / Boundary
-- [ ] 集成到 pipeline 流程
-
-**优先级**: P0
+**工作量**: 0.5 天
 
 ---
 
-### US-002: 自动验证
-**作为** 开发者，**我希望** 代码生成后自动验证，**以便** 确保符合验收标准。
+## v1.3 待实现 - 体验优化
 
-**验收标准**:
-- [ ] 新增 `/verification-agent` agent
-- [ ] 支持测试/lint/grep 验证
-- [ ] 输出验证结果
+### US-009: 智能 Planning Gate
 
-**优先级**: P0
+**当前**: 所有任务都需人工确认
 
----
+**改进**: 根据风险等级自动判断
 
-### US-003: 任务规格模板
-**作为** 开发者，**我希望** 有标准化的任务输入格式，**以便** 减少模糊描述。
+| 风险等级 | 条件 | 处理 |
+|----------|------|------|
+| 🟢 低 | 影响文件 < 3，非核心模块 | 自动通过 |
+| 🟡 中 | 影响文件 3-10 个 | 提示确认 |
+| 🔴 高 | 影响文件 > 10 或核心模块 | 必须确认 |
 
-**验收标准**:
-- [ ] 新增 `task-spec-template.md` rule
-- [ ] 包含 Scope / Pattern / Criteria / Out-of-scope
+**实现**: 在 prd-agent 输出中增加风险等级评估
 
-**优先级**: P1
+**工作量**: 1 天
 
 ---
 
-### US-004: 错误反馈学习
-**作为** 开发者，**我希望** 系统能从错误中学习，**以便** 避免重复犯错。
+### US-010: 会话断点续传
 
-**验收标准**:
-- [ ] 新增 feedback-log 机制
-- [ ] 错误分类（pattern 缺失、impact 不完整等）
-- [ ] 生成改进建议
+**当前**: `.harness/sessions/` 保存记录，但无法恢复执行
 
-**优先级**: P1
+**改进**: 支持从中断点继续
 
----
+```bash
+# 查看可恢复的会话
+/pipeline --list-sessions
 
-### US-005: 会话状态持久化
-**作为** 开发者，**我希望** 中断后能恢复进度，**以便** 继续未完成的任务。
+# 恢复执行
+/pipeline --resume session-20260427-120000
+```
 
-**验收标准**:
-- [ ] 保存 impact-map / plan / verification-result
-- [ ] 支持断点续传
-
-**优先级**: P2
+**工作量**: 1-2 天
 
 ---
 
-## 实现计划
+## v2.0 待实现 - 生态扩展
 
-| Phase | 功能 | 分支名 | PR |
-|-------|------|--------|-----|
-| 1 | impact-analyzer | `feat/impact-analyzer` | #2 |
-| 2 | verification-agent | `feat/verification-agent` | #3 |
-| 3 | task-spec-template | `feat/task-spec-template` | #4 |
-| 4 | pipeline 集成 | `feat/pipeline-integration` | #5 |
-| 5 | feedback-log | `feat/feedback-log` | #6 |
+### US-011: 更多语言/框架支持
+
+**当前**: rules 主要覆盖 Go + React/TypeScript
+
+**扩展**:
+
+| 语言/框架 | rules 文件 | 优先级 |
+|-----------|------------|--------|
+| Python (FastAPI) | `python-fastapi-rules.md` | P0 |
+| Python (Django) | `python-django-rules.md` | P1 |
+| Java (Spring Boot) | `java-spring-rules.md` | P1 |
+| Rust | `rust-rules.md` | P2 |
+| Vue 3 | `vue-coding-standards.md` | P1 |
+
+**工作量**: 每个语言/框架 0.5-1 天
 
 ---
 
-## 参考
+### US-012: 项目模板库
 
-- [Harness Engineering Guide](https://www.verdent.ai/guides/harness-engineering-ai-coding-workflow)
-- [OpenAI Harness Engineering Field Report](https://openai.com/index/harness-engineering/)
-- [Claude Code Documentation](https://code.claude.com/docs)
+**目标**: 预置常见项目模板，快速启动
+
+**模板示例**:
+- `template-fastapi-crud` - FastAPI CRUD 项目
+- `template-react-admin` - React 管理后台
+- `template-go-microservice` - Go 微服务
+
+**用法**:
+```bash
+/pipeline --template fastapi-crud 创建一个用户管理API
+```
+
+**工作量**: 按需积累
+
+---
+
+## 迭代优先级排序
+
+| 版本 | 功能 | 工作量 | 价值 | 优先级 |
+|------|------|--------|------|--------|
+| v1.1 | Feedback Log | 1天 | 高 - 形成学习闭环 | 🥇 |
+| v1.2 | code-review 集成 | 0.5天 | 中 - 质量保障 | 🥈 |
+| v1.2 | MCP 集成示例 | 2-3天 | 高 - 实时上下文 | 🥉 |
+| v1.3 | 智能 Planning Gate | 1天 | 中 - 提升效率 | 4 |
+| v1.3 | 会话断点续传 | 1-2天 | 低 - 锦上添花 | 5 |
+| v2.0 | 更多语言支持 | 按需 | 中 - 扩展场景 | 6 |
+
+---
+
+## 下一步行动
+
+**推荐先做**: Feedback Log（工作量小，价值高）
+
+要开始实现吗？
