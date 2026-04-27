@@ -1,3 +1,7 @@
+---
+paths: "**/*.test.ts, **/*.test.tsx, **/*_test.go, **/test_*.py"
+---
+
 # TDD 编码范式
 
 ## 核心原则
