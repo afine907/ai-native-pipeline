@@ -41,13 +41,48 @@
 
 ## 📦 安装
 
+### 方式一：Claude Code 插件市场（外网）
+
 ```bash
-# 在线安装
 /plugin install https://github.com/afine907/ai-native-pipeline.git
 /reload-plugins
 
 # 验证安装
 /plugin
+```
+
+### 方式二：内网离线安装
+
+适合内网环境或无 marketplace 访问权限的场景：
+
+```bash
+# 1. 下载项目到本地
+# 2. 进入项目目录
+cd ai-native-pipeline
+
+# 3. 运行安装脚本
+chmod +x install.sh
+./install.sh
+```
+
+或从内网服务器一键安装：
+
+```bash
+curl -fsSL http://your-server/ai-native-pipeline/install.sh | bash
+```
+
+详见 [内网安装指南](INSTALL.md)
+
+### 验证安装
+
+```bash
+# 检查 skills
+ls ~/.claude/skills/
+# pipeline/  task-breakdown/  code-review/  test-generator/
+
+# 检查 agents
+ls ~/.claude/agents/
+# impact-analyzer.md  prd-agent.md  spec-agent.md  coding-agent.md  verification-agent.md
 ```
 
 ---
