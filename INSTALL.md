@@ -1,87 +1,157 @@
-# AI Native Pipeline - 内网安装指南
+# AI Native Pipeline - 安装指南
+
+## 安装模式
+
+| 模式 | 安装位置 | 适用场景 | Git 共享 |
+|------|----------|----------|----------|
+| **全局安装** | `~/.claude/` | 个人使用，所有项目可用 | ❌ 不可共享 |
+| **项目级安装** | `./.claude/` | 团队协作，统一工作流 | ✅ 可共享 |
+
+---
 
 ## 快速安装
 
-### 方式一：从本地目录安装
+### 全局安装（推荐个人使用）
 
 ```bash
-# 1. 下载或复制项目到本地
-# 2. 进入项目目录
+# 克隆项目
+git clone https://github.com/afine907/ai-native-pipeline.git
 cd ai-native-pipeline
 
-# 3. 运行安装脚本
+# 安装
 chmod +x install.sh
 ./install.sh
 
-# 或指定源目录
-./install.sh /path/to/ai-native-pipeline
+# 或明确指定全局安装
+./install.sh --global
 ```
 
-### 方式二：从内网服务器安装
+**安装位置**：
+```
+~/.claude/
+├── skills/
+│   ├── pipeline/
+│   ├── task-breakdown/
+│   ├── code-review/
+│   └── test-generator/
+├── agents/
+│   ├── impact-analyzer.md
+│   ├── prd-agent.md
+│   ├── spec-agent.md
+│   ├── coding-agent.md
+│   └── verification-agent.md
+└── rules/
+    └── ... (8 个规范文件)
+```
+
+**特点**：
+- ✅ 所有项目都可使用
+- ✅ 个人配置，独立管理
+- ❌ 不可通过 git 共享给团队
+
+---
+
+### 项目级安装（推荐团队使用）
 
 ```bash
-# 如果部署到内网服务器
+# 在项目根目录执行
+cd /path/to/your-project
+
+# 下载并安装（假设已有 install.sh）
+/path/to/ai-native-pipeline/install.sh --project
+
+# 或从内网服务器安装
+curl -fsSL http://your-server/ai-native-pipeline/install.sh | bash -s -- --project
+```
+
+**安装位置**：
+```
+your-project/
+└── .claude/
+    ├── skills/
+    ├── agents/
+    └── rules/
+```
+
+**特点**：
+- ✅ 仅当前项目可用
+- ✅ 可通过 git 共享给团队
+- ✅ 团队成员 clone 后自动获得相同工作流
+- ✅ 与项目代码版本同步
+
+**推荐做法**：
+```bash
+# 安装后提交到 git
+git add .claude/
+git commit -m "chore: add ai-native-pipeline for team"
+
+# 团队成员 pull 后立即可用
+git pull
+```
+
+---
+
+## 内网服务器部署
+
+### 1. 部署到内网 Web 服务器
+
+```bash
+# 复制到 Web 目录
+cp -r ai-native-pipeline /var/www/html/
+
+# Nginx 配置示例
+cat > /etc/nginx/conf.d/ai-native-pipeline.conf << 'EOF'
+server {
+    listen 80;
+    server_name your-server;
+    
+    location /ai-native-pipeline/ {
+        alias /var/www/html/ai-native-pipeline/;
+        autoindex on;
+    }
+}
+EOF
+
+# 重启 Nginx
+nginx -s reload
+```
+
+### 2. 告知同事安装命令
+
+**全局安装**：
+```bash
 curl -fsSL http://your-server/ai-native-pipeline/install.sh | bash
+```
 
-# 或
-wget -qO- http://your-server/ai-native-pipeline/install.sh | bash
+**项目级安装**：
+```bash
+curl -fsSL http://your-server/ai-native-pipeline/install.sh | bash -s -- --project
 ```
 
 ---
 
-## 验证安装
-
-安装完成后，重启 Claude Code 并验证：
+## 安装脚本完整用法
 
 ```bash
-# 检查 skills 目录
-ls ~/.claude/skills/
+Usage: ./install.sh [选项]
 
-# 应该看到:
-# pipeline/  task-breakdown/  code-review/  test-generator/
+选项:
+  -g, --global      全局安装 (默认) - 安装到 ~/.claude/
+                    所有项目都可使用
 
-# 检查 agents 目录
-ls ~/.claude/agents/
+  -p, --project     项目级安装 - 安装到当前目录 .claude/
+                    仅当前项目可用，可通过 git 共享给团队
 
-# 应该看到:
-# impact-analyzer.md  prd-agent.md  spec-agent.md  coding-agent.md  verification-agent.md
+  -u, --uninstall   卸载已安装的组件
 
-# 检查 rules 目录
-ls ~/.claude/rules/
+  -h, --help        显示帮助信息
+  -v, --version     显示版本信息
 
-# 应该看到 8 个 .md 文件
-```
-
----
-
-## 使用方法
-
-### 一键全流程
-
-```bash
-/pipeline 在现有登录模块基础上，增加 JWT 认证
-```
-
-### 分步使用
-
-```bash
-# 1. 分析代码影响
-/impact-analyzer 在用户模块增加手机号登录
-
-# 2. 需求分析
-/prd-agent 用户需要一个商品列表页
-
-# 3. 技术规格
-/spec-agent
-
-# 4. 代码生成
-/coding-agent
-
-# 5. 验收验证
-/verification-agent
-
-# 6. 任务拆解（复杂任务）
-/task-breakdown
+示例:
+  ./install.sh                    # 全局安装
+  ./install.sh --global           # 全局安装
+  ./install.sh --project          # 项目级安装
+  ./install.sh --uninstall        # 卸载全局安装
 ```
 
 ---
@@ -89,18 +159,86 @@ ls ~/.claude/rules/
 ## 卸载
 
 ```bash
-# 方式一：运行卸载脚本
-./uninstall.sh
-
-# 方式二：使用安装脚本卸载
+# 卸载全局安装
 ./install.sh --uninstall
+
+# 或运行卸载脚本
+./uninstall.sh
 ```
 
 ---
 
-## 目录结构
+## 验证安装
 
-安装后的文件位置：
+### 检查全局安装
+
+```bash
+ls ~/.claude/skills/
+# 应该看到: pipeline/  task-breakdown/  code-review/  test-generator/
+
+ls ~/.claude/agents/
+# 应该看到: impact-analyzer.md  prd-agent.md  spec-agent.md  coding-agent.md  verification-agent.md
+
+ls ~/.claude/rules/
+# 应该看到 8 个 .md 文件
+```
+
+### 检查项目级安装
+
+```bash
+ls ./.claude/skills/
+ls ./.claude/agents/
+ls ./.claude/rules/
+```
+
+### 在 Claude Code 中验证
+
+重启 Claude Code 后：
+
+```bash
+# 测试 pipeline skill
+/pipeline 用户需要一个登录功能
+
+# 测试 agent
+/impact-analyzer 分析用户模块
+```
+
+---
+
+## 常见问题
+
+### Q: 全局安装和项目级安装可以同时存在吗？
+
+A: 可以。项目级安装会覆盖全局安装的同名组件。Claude Code 会优先加载项目级的组件。
+
+### Q: 如何更新？
+
+A: 重新运行安装脚本即可覆盖更新：
+```bash
+./install.sh --global   # 更新全局
+./install.sh --project  # 更新项目级
+```
+
+### Q: 团队成员如何使用项目级安装？
+
+A: 项目级安装会提交到 git，团队成员 pull 后自动可用。无需单独安装。
+
+### Q: 如何切换安装模式？
+
+A: 直接运行另一种模式的安装命令即可。例如从全局切换到项目级：
+```bash
+./install.sh --project
+```
+
+### Q: 安装后不生效？
+
+A: 请重启 Claude Code，或执行 `/reload-plugins`（如果支持）。
+
+---
+
+## 目录结构对比
+
+### 全局安装
 
 ```
 ~/.claude/
@@ -113,108 +251,51 @@ ls ~/.claude/rules/
 │   │   └── SKILL.md
 │   └── test-generator/
 │       └── SKILL.md
-│
 ├── agents/
 │   ├── impact-analyzer.md
 │   ├── prd-agent.md
 │   ├── spec-agent.md
 │   ├── coding-agent.md
 │   └── verification-agent.md
-│
-├── rules/
-│   ├── task-spec-template.md
-│   ├── api-spec-rules.md
-│   ├── acceptance-criteria-rules.md
-│   ├── frontend-coding-standards.md
-│   ├── backend-coding-standards.md
-│   ├── tdd-pattern.md
-│   ├── user-story-template.md
-│   └── non-functional-requirements.md
-│
-└── plugins/
-    └── data/
-        └── ai-native-pipeline/   # 插件数据目录
+└── rules/
+    ├── task-spec-template.md
+    ├── api-spec-rules.md
+    ├── acceptance-criteria-rules.md
+    ├── frontend-coding-standards.md
+    ├── backend-coding-standards.md
+    ├── tdd-pattern.md
+    ├── user-story-template.md
+    └── non-functional-requirements.md
+```
+
+### 项目级安装
+
+```
+your-project/
+├── .claude/
+│   ├── skills/
+│   ├── agents/
+│   └── rules/
+├── src/
+├── tests/
+└── ... (其他项目文件)
 ```
 
 ---
 
-## 工作流
+## 使用方法
 
-```
-用户需求
-    │
-    ▼
-impact-analyzer → prd-agent → spec-agent → coding-agent → verification-agent
-    │               │            │              │                │
-    │               │            │              │                │
-    ▼               ▼            ▼              ▼                ▼
-Impact Map    Task Spec + PRD   技术规格       代码实现          验证结果
-```
-
----
-
-## 常见问题
-
-### Q: 安装后不生效？
-
-A: 请重启 Claude Code，或执行 `/reload-plugins`（如果支持）。
-
-### Q: 如何更新？
-
-A: 重新运行 `./install.sh` 即可覆盖更新。
-
-### Q: 如何检查版本？
-
-A: 运行 `./install.sh --version` 查看版本信息。
-
-### Q: 安装到项目而非全局？
-
-A: 修改脚本中的目标目录，从 `~/.claude/` 改为项目内的 `.claude/`。
-
----
-
-## 内网服务器部署
-
-### 部署步骤
-
-1. 将整个项目复制到内网 Web 服务器
+安装完成后，在 Claude Code 中使用：
 
 ```bash
-# 例如部署到 Nginx
-cp -r ai-native-pipeline /var/www/html/
+# 一键全流程
+/pipeline 在现有登录模块基础上，增加 JWT 认证
+
+# 分步使用
+/impact-analyzer    # 代码影响分析
+/prd-agent          # 需求分析
+/spec-agent         # 技术规格
+/coding-agent       # 代码生成
+/verification-agent # 验收验证
+/task-breakdown     # 任务拆解
 ```
-
-2. 确保文件可访问
-
-```bash
-# 测试访问
-curl http://your-server/ai-native-pipeline/install.sh
-```
-
-3. 告知同事安装命令
-
-```bash
-curl -fsSL http://your-server/ai-native-pipeline/install.sh | bash
-```
-
-### Nginx 配置示例
-
-```nginx
-server {
-    listen 80;
-    server_name your-server;
-    
-    location /ai-native-pipeline/ {
-        alias /var/www/html/ai-native-pipeline/;
-        index install.sh;
-        autoindex on;
-    }
-}
-```
-
----
-
-## 技术支持
-
-- 项目地址：https://github.com/afine907/ai-native-pipeline
-- 问题反馈：提交 GitHub Issue
