@@ -1,3 +1,7 @@
+---
+paths: "api/**/*, **/openapi.yaml, **/swagger.yaml"
+---
+
 # API接口定义规范
 
 本文档定义PRD中API接口的标准格式，确保生成的接口文档结构一致、可直接用于开发。

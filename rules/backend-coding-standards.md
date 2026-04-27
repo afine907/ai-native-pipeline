@@ -1,3 +1,7 @@
+---
+paths: "**/*.go"
+---
+
 # 后端编码规范 (Golang)
 
 本文档定义Golang后端项目的编码规范，确保生成的代码符合团队标准。
@@ -317,6 +321,7 @@ package repository
 
 import (
     "context"
+    "errors"
 
     "github.com/your/project/internal/model"
     "gorm.io/gorm"
