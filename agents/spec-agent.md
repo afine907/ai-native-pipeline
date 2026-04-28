@@ -51,9 +51,45 @@ User {
 3. 保持向后兼容
 ```
 
+## 架构风格适配
+
+### RESTful API
+- 使用 HTTP 方法语义（GET/POST/PUT/DELETE）
+- 资源命名用名词复数
+- 状态码规范使用
+
+### GraphQL
+- 定义 Schema 和 Resolver
+- 查询优化（N+1 问题）
+- 分页和过滤
+
+### 微服务
+- 服务边界划分
+- API 网关设计
+- 服务间通信（同步/异步）
+
+## 数据库适配
+
+| 数据库 | ORM 推荐 | 迁移工具 |
+|--------|----------|----------|
+| PostgreSQL | SQLAlchemy / Prisma | Alembic / Prisma Migrate |
+| MySQL | SQLAlchemy / TypeORM | Alembic / TypeORM |
+| MongoDB | MongoEngine / Mongoose | - |
+| Redis | redis-py / ioredis | - |
+
+## 技术决策框架
+
+| 决策点 | 考虑因素 | 示例 |
+|--------|----------|------|
+| 语言/框架 | 团队熟悉度、生态 | Python/FastAPI |
+| 数据库 | 数据模型、规模 | PostgreSQL |
+| 缓存 | 访问模式、一致性 | Redis |
+| 消息队列 | 可靠性、延迟 | RabbitMQ |
+
 ## 关键原则
 
 1. **聚焦"怎么做"** - 不重复产品描述
 2. **决策有理由** - 技术选型说明原因
 3. **兼容性优先** - 不破坏现有接口
 4. **保持精简** - 输出控制在 20 行内
+5. **架构适配** - 根据项目风格调整设计
