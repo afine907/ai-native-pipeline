@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "description": "在用户模块增加手机号登录功能",
+    "type": "incremental",
+    "difficulty": "medium"
+  },
+  {
+    "id": 2,
+    "description": "将登录模块从 session 改为 JWT",
+    "type": "incremental",
+    "difficulty": "hard"
+  },
+  {
+    "id": 3,
+    "description": "添加商品列表分页功能",
+    "type": "incremental",
+    "difficulty": "easy"
+  },
+  {
+    "id": 4,
+    "description": "全新模块：消息通知中心",
+    "type": "new_module",
+    "difficulty": "medium"
+  },
+  {
+    "id": 5,
+    "description": "优化数据库查询性能",
+    "type": "optimization",
+    "difficulty": "hard"
+  }
+]
