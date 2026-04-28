@@ -1,0 +1,145 @@
+name: Agent Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: 'Agent to evaluate'
+        required: true
+        default: 'impact-analyzer'
+        type: choice
+        options:
+          - impact-analyzer
+          - prd-agent
+          - spec-agent
+          - coding-agent
+          - verification-agent
+      model:
+        description: 'Model to use'
+        required: false
+        default: 'LongCat-Flash-Chat'
+
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'agents/*.md'
+
+jobs:
+  evaluate:
+    name: Evaluate Agent
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'needs-evaluation'))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests
+      
+      - name: Generate test tasks
+        run: |
+          python scripts/evaluate_interactive.py --generate-tasks
+      
+      - name: Create test project
+        run: |
+          mkdir -p /tmp/test-project/src/{auth,api/routes,models}
+          mkdir -p /tmp/test-project/tests/auth
+          
+          cat > /tmp/test-project/src/auth/session.py << 'EOF'
+          """用户认证模块"""
+          class SessionManager:
+              def create(self, user_id: int) -> str:
+                  return f"session_{user_id}"
+              def verify(self, token: str) -> dict:
+                  return {"user_id": int(token.split("_")[1])}
+          EOF
+          
+          cat > /tmp/test-project/src/auth/middleware.py << 'EOF'
+          """认证中间件"""
+          from auth.session import SessionManager
+          session_manager = SessionManager()
+          def authenticate(token: str) -> dict:
+              return session_manager.verify(token)
+          EOF
+          
+          cat > /tmp/test-project/src/models/user.py << 'EOF'
+          """用户模型"""
+          from dataclasses import dataclass
+          @dataclass
+          class User:
+              id: int
+              username: str
+              email: str
+          EOF
+      
+      - name: Run Agent evaluation
+        env:
+          LONGCAT_API_KEY: ${{ secrets.LONGCAT_API_KEY }}
+        run: |
+          AGENT="${{ github.event.inputs.agent || 'impact-analyzer' }}"
+          
+          echo "Evaluating $AGENT..."
+          
+          # Run real evaluation
+          python scripts/evaluate_real.py \
+            --agent "$AGENT" \
+            --api-key "$LONGCAT_API_KEY"
+          
+          # Run LLM judge
+          python scripts/evaluate_llm_judge.py \
+            --agent "$AGENT" \
+            --api-key "$LONGCAT_API_KEY"
+      
+      - name: Generate report
+        run: |
+          python scripts/evaluate_interactive.py --report impact-analyzer || true
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: |
+            .harness/eval/outputs/
+            .harness/eval/reports/
+          retention-days: 7
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read latest report
+            const reports = fs.readdirSync('.harness/eval/reports')
+              .filter(f => f.endsWith('.json'))
+              .sort()
+              .reverse();
+            
+            if (reports.length > 0) {
+              const report = JSON.parse(fs.readFileSync(`.harness/eval/reports/${reports[0]}`));
+              
+              const body = `## Agent Evaluation Results
+              
+              **Agent**: ${report.agent}
+              **Average Score**: ${report.summary.avg_score}/5
+              **Tasks Evaluated**: ${report.summary.total_tasks}
+              
+              | Task | Score |
+              |------|-------|
+              ${report.results.map(r => `| ${r.task_id} | ${r.avg_score}/5 |`).join('\n')}
+              `;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
