@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "input": "在用户模块增加手机号登录功能",
+    "expected": {
+      "core_files": ["src/auth/session.py", "src/auth/middleware.py"],
+      "boundary": ["src/payments/"],
+      "risks": ["authenticate() 被多处调用"]
+    }
+  },
+  {
+    "id": 2,
+    "input": "将登录模块从 session 改为 JWT",
+    "expected": {
+      "core_files": ["src/auth/session.py", "src/auth/middleware.py"],
+      "boundary": ["src/payments/", "src/admin/"],
+      "risks": ["签名变更影响调用方"]
+    }
+  },
+  {
+    "id": 3,
+    "input": "添加商品列表分页功能",
+    "expected": {
+      "core_files": ["src/api/products.py", "src/models/product.py"],
+      "boundary": [],
+      "risks": []
+    }
+  },
+  {
+    "id": 4,
+    "input": "全新模块：消息通知中心",
+    "expected": {
+      "core_files": [],
+      "boundary": [],
+      "risks": [],
+      "type": "new_module"
+    }
+  },
+  {
+    "id": 5,
+    "input": "优化数据库查询性能",
+    "expected": {
+      "core_files": ["src/db/"],
+      "boundary": [],
+      "risks": ["可能影响现有功能"]
+    }
+  }
+]

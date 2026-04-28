@@ -322,6 +322,55 @@ ai-native-pipeline/
 
 ---
 
+## 📊 Agent 评估与 AgentOps
+
+### 评估 Agent 效果
+
+修改 Agent 后，如何验证改进？
+
+```bash
+# 运行评估
+python scripts/evaluate_agent.py \
+  --agent impact-analyzer \
+  --test-cases tests/eval/test_cases_impact_analyzer.json
+
+# 查看报告
+cat .harness/eval/report_*.json
+```
+
+评估维度：
+- **准确率** - 输出是否正确
+- **完整性** - 是否覆盖所有要求
+- **简洁性** - 是否冗余
+- **可读性** - 是否易于理解
+
+详细文档: [docs/agent-evaluation.md](docs/agent-evaluation.md)
+
+### AgentOps 监控
+
+```
+┌─────────────────────────────────────────┐
+│          Agent 监控面板                  │
+├─────────────────────────────────────────┤
+│  今日执行: 42 次                         │
+│  成功率: 90%                            │
+│  平均耗时: 45s                          │
+│  Token 消耗: 12K/任务                   │
+└─────────────────────────────────────────┘
+```
+
+AgentOps 能力：
+- **监控** - 实时监控 Agent 状态
+- **日志** - 完整执行日志
+- **告警** - 异常自动告警
+- **版本管理** - Agent 版本控制
+- **A/B 测试** - 对比不同版本
+- **回滚** - 快速回滚到稳定版本
+
+详细文档: [docs/agentops.md](docs/agentops.md)
+
+---
+
 ## 📖 Harness Engineering 原则
 
 本项目遵循 [Harness Engineering](https://openai.com/index/harness-engineering/) 最佳实践：
