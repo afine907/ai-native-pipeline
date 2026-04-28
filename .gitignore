@@ -1,0 +1,24 @@
+# 评估过程文件
+.harness/eval/outputs/
+.harness/eval/reports/
+
+# 但保留任务定义
+!.harness/eval/tasks.json
+
+# 会话文件
+.harness/sessions/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
