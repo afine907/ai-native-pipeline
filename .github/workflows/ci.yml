@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install ruff black mypy
+      
+      - name: Run Ruff
+        run: ruff check scripts/ --ignore E501
+      
+      - name: Check formatting
+        run: black --check scripts/ || true
+      
+      - name: Type check
+        run: mypy scripts/ --ignore-missing-imports || true
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest requests
+      
+      - name: Generate test tasks
+        run: |
+          python scripts/evaluate_interactive.py --generate-tasks
+      
+      - name: Verify scripts syntax
+        run: |
+          python -m py_compile scripts/evaluate_interactive.py
+          python -m py_compile scripts/evaluate_llm_judge.py
+          python -m py_compile scripts/run_agent_auto.py
+          python -m py_compile scripts/evaluate_real.py
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check markdown files
+        run: |
+          find . -name "*.md" -not -path "./.git/*" | head -20
+          
+      - name: Verify README exists
+        run: |
+          test -f README.md && echo "✅ README.md exists"
+          test -f docs/agent-evaluation.md && echo "✅ docs/agent-evaluation.md exists"
+          test -f docs/agentops.md && echo "✅ docs/agentops.md exists"

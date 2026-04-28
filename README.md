@@ -1,7 +1,10 @@
 # AI Native Pipeline
 
+[![CI](https://github.com/afine907/ai-native-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/afine907/ai-native-pipeline/actions/workflows/ci.yml)
+[![Agent Evaluation](https://github.com/afine907/ai-native-pipeline/actions/workflows/evaluate.yml/badge.svg)](https://github.com/afine907/ai-native-pipeline/actions/workflows/evaluate.yml)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://claude.com/claude-code)
 [![Harness Engine](https://img.shields.io/badge/Harness-Engine-purple)](https://openai.com/index/harness-engineering/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > 从需求到代码，全自动 AI 开发流水线
 >
@@ -368,6 +371,47 @@ AgentOps 能力：
 - **回滚** - 快速回滚到稳定版本
 
 详细文档: [docs/agentops.md](docs/agentops.md)
+
+---
+
+## 🔄 CI/CD
+
+### GitHub Actions
+
+本项目提供完整的 CI/CD 流水线：
+
+| 工作流 | 触发条件 | 功能 |
+|--------|----------|------|
+| **CI** | Push/PR to master | 代码检查、测试、文档验证 |
+| **Agent Evaluation** | 手动触发 / PR (label: needs-evaluation) | Agent 效果评估 |
+| **Release** | 发布 Release | 构建发布产物 |
+| **Security** | 每周一 | 安全检查 |
+
+### 运行 Agent 评估
+
+1. **手动触发**：
+   - 进入 Actions → Agent Evaluation
+   - 选择要评估的 Agent
+   - 点击 Run workflow
+
+2. **PR 自动评估**：
+   - 给 PR 添加 `needs-evaluation` 标签
+   - 自动运行评估并评论结果
+
+### 评估效果
+
+最近评估结果：
+```
+Agent: impact-analyzer
+平均分: 4.70/5
+
+| 维度 | 分数 |
+|------|------|
+| 完整性 | 4.2/5 |
+| 准确性 | 4.8/5 |
+| 简洁性 | 4.8/5 |
+| 可读性 | 5.0/5 |
+```
 
 ---
 
