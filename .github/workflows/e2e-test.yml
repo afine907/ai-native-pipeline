@@ -1,0 +1,241 @@
+name: E2E Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scenario:
+        description: 'Test scenario'
+        required: true
+        default: 'phone-login'
+        type: choice
+        options:
+          - phone-login
+          - jwt-migration
+          - product-pagination
+          - notification-center
+
+  schedule:
+    # 每天凌晨 2 点运行
+    - cron: '0 18 * * *'
+
+env:
+  LONGCAT_API_KEY: ${{ secrets.LONGCAT_API_KEY }}
+
+jobs:
+  e2e-test:
+    name: End-to-End Pipeline Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests pytest
+      
+      - name: Create test project
+        run: |
+          # 创建完整的测试项目
+          mkdir -p /tmp/test-project/src/{auth,api/routes,models,payments}
+          mkdir -p /tmp/test-project/tests/{auth,api}
+          
+          # 用户模型
+          cat > /tmp/test-project/src/models/user.py << 'EOF'
+          from dataclasses import dataclass
+          from typing import Optional
+          
+          @dataclass
+          class User:
+              id: int
+              username: str
+              email: str
+              phone: Optional[str] = None
+              password_hash: str = ""
+          EOF
+          
+          # Session 管理
+          cat > /tmp/test-project/src/auth/session.py << 'EOF'
+          import datetime
+          
+          class SessionManager:
+              def __init__(self):
+                  self.sessions = {}
+              
+              def create(self, user_id: int) -> str:
+                  token = f"session_{user_id}_{datetime.datetime.now().timestamp()}"
+                  self.sessions[token] = user_id
+                  return token
+              
+              def verify(self, token: str) -> dict:
+                  if token in self.sessions:
+                      return {"user_id": self.sessions[token], "valid": True}
+                  return {"user_id": None, "valid": False}
+              
+              def destroy(self, token: str):
+                  self.sessions.pop(token, None)
+          EOF
+          
+          # 认证中间件
+          cat > /tmp/test-project/src/auth/middleware.py << 'EOF'
+          from auth.session import SessionManager
+          
+          session_manager = SessionManager()
+          
+          def authenticate(token: str) -> dict:
+              return session_manager.verify(token)
+          
+          def require_auth(func):
+              def wrapper(*args, **kwargs):
+                  return func(*args, **kwargs)
+              return wrapper
+          EOF
+          
+          # API 路由
+          cat > /tmp/test-project/src/api/routes/user.py << 'EOF'
+          from auth.middleware import authenticate, require_auth
+          
+          @require_auth
+          def get_user(user_id: int):
+              return {"id": user_id, "username": "test"}
+          EOF
+          
+          # 支付模块（boundary）
+          cat > /tmp/test-project/src/payments/__init__.py << 'EOF'
+          # Payment module - independent auth
+          pass
+          EOF
+          
+          # 测试文件
+          cat > /tmp/test-project/tests/auth/test_session.py << 'EOF'
+          import pytest
+          from auth.session import SessionManager
+          
+          def test_create_session():
+              manager = SessionManager()
+              token = manager.create(1)
+              assert token.startswith("session_")
+          
+          def test_verify_session():
+              manager = SessionManager()
+              token = manager.create(1)
+              result = manager.verify(token)
+              assert result["valid"] is True
+              assert result["user_id"] == 1
+          EOF
+          
+          echo "✅ Test project created"
+      
+      - name: Run impact-analyzer
+        run: |
+          python scripts/evaluate_interactive.py --generate-tasks
+          
+          python scripts/evaluate_real.py \
+            --agent impact-analyzer \
+            --api-key "$LONGCAT_API_KEY"
+          
+          echo "✅ impact-analyzer completed"
+      
+      - name: Run prd-agent
+        if: env.LONGCAT_API_KEY != ''
+        run: |
+          python scripts/evaluate_real.py \
+            --agent prd-agent \
+            --api-key "$LONGCAT_API_KEY"
+          
+          echo "✅ prd-agent completed"
+      
+      - name: Run spec-agent
+        if: env.LONGCAT_API_KEY != ''
+        run: |
+          python scripts/evaluate_real.py \
+            --agent spec-agent \
+            --api-key "$LONGCAT_API_KEY"
+          
+          echo "✅ spec-agent completed"
+      
+      - name: Evaluate all agents
+        if: env.LONGCAT_API_KEY != ''
+        run: |
+          for agent in impact-analyzer prd-agent spec-agent; do
+            python scripts/evaluate_llm_judge.py \
+              --agent "$agent" \
+              --api-key "$LONGCAT_API_KEY"
+          done
+          
+          echo "✅ All agents evaluated"
+      
+      - name: Generate summary report
+        if: env.LONGCAT_API_KEY != ''
+        run: |
+          echo "## E2E Test Summary" > e2e-report.md
+          echo "" >> e2e-report.md
+          
+          for report in .harness/eval/reports/*_llm_*.json; do
+            if [ -f "$report" ]; then
+              AGENT=$(jq -r '.agent' "$report")
+              SCORE=$(jq -r '.summary.avg_score' "$report")
+              echo "### $AGENT: ${SCORE}/5" >> e2e-report.md
+              echo "" >> e2e-report.md
+            fi
+          done
+          
+          cat e2e-report.md
+      
+      - name: Upload E2E results
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            .harness/eval/
+            e2e-report.md
+          retention-days: 30
+      
+      - name: Quality gate
+        if: env.LONGCAT_API_KEY != ''
+        run: |
+          # 检查所有 agent 分数
+          PASS=true
+          
+          for report in .harness/eval/reports/*_llm_*.json; do
+            if [ -f "$report" ]; then
+              AGENT=$(jq -r '.agent' "$report")
+              SCORE=$(jq -r '.summary.avg_score' "$report")
+              
+              if (( $(echo "$SCORE < 3.5" | bc -l) )); then
+                echo "❌ $AGENT: $SCORE/5 (failed)"
+                PASS=false
+              else
+                echo "✅ $AGENT: $SCORE/5 (passed)"
+              fi
+            fi
+          done
+          
+          if [ "$PASS" = false ]; then
+            echo ""
+            echo "❌ Quality gate failed"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All quality gates passed"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: e2e-test
+    if: always()
+    
+    steps:
+      - name: Check result
+        run: |
+          if [ "${{ needs.e2e-test.result }}" = "success" ]; then
+            echo "✅ E2E tests passed"
+          else
+            echo "❌ E2E tests failed"
+            exit 1
+          fi

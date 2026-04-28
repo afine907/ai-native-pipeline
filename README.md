@@ -374,6 +374,55 @@ AgentOps 能力：
 
 ---
 
+## 🔄 CI/CD
+
+### GitHub Actions 工作流
+
+| 工作流 | 触发条件 | 功能 |
+|--------|----------|------|
+| **CI** | Push/PR to master | 代码检查、测试、Plugin 验证、Agent 评估 |
+| **E2E Test** | 手动触发 / 每天 | 端到端流水线测试 |
+| **Agent Evaluation** | 手动触发 / PR label | Agent 效果评估 |
+| **Release** | 发布 Release | 构建发布产物 |
+| **Security** | 每周一 | 安全检查 |
+
+### 配置 Secret
+
+在 GitHub 仓库设置中添加 Secret：
+
+```
+Settings → Secrets and variables → Actions → New repository secret
+
+Name: LONGCAT_API_KEY
+Value: ak_xxx（你的 LongCat API Key）
+```
+
+### 运行 E2E 测试
+
+1. **手动触发**：
+   ```
+   Actions → E2E Test → Run workflow → 选择 test_scenario
+   ```
+
+2. **自动运行**：
+   - 每天凌晨 2 点自动运行
+   - 测试所有 Agent 的完整流程
+
+### 质量门禁
+
+Agent 评估结果必须满足：
+- **平均分 ≥ 3.5/5**
+- **完整性 ≥ 3.0/5**
+- **准确性 ≥ 3.0/5**
+
+### PR 自动评估
+
+1. 给 PR 添加标签 `needs-evaluation`
+2. 自动运行 Agent 评估
+3. 结果评论到 PR
+
+---
+
 ## 📖 Harness Engineering 原则
 
 本项目遵循 [Harness Engineering](https://openai.com/index/harness-engineering/) 最佳实践：
