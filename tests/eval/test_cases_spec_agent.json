@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "input": "基于 Task Spec 设计手机号登录的技术方案",
+    "expected": {
+      "has_api_design": true,
+      "has_data_model": true,
+      "has_tech_decisions": true,
+      "has_compatibility": true
+    }
+  },
+  {
+    "id": 2,
+    "input": "设计 JWT 认证系统的技术规格",
+    "expected": {
+      "has_api_design": true,
+      "has_data_model": true,
+      "has_tech_decisions": true,
+      "has_security_considerations": true
+    }
+  },
+  {
+    "id": 3,
+    "input": "设计商品分页 API 的技术方案",
+    "expected": {
+      "has_api_design": true,
+      "has_pagination_strategy": true,
+      "has_performance_considerations": true
+    }
+  },
+  {
+    "id": 4,
+    "input": "设计消息通知中心的技术架构",
+    "expected": {
+      "has_api_design": true,
+      "has_data_model": true,
+      "has_service_boundary": true,
+      "has_async_design": true
+    }
+  },
+  {
+    "id": 5,
+    "input": "设计微服务拆分方案",
+    "expected": {
+      "has_service_boundary": true,
+      "has_api_gateway": true,
+      "has_communication_pattern": true,
+      "has_data_consistency": true
+    }
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "input": "实现手机号登录功能（TDD）",
+    "expected": {
+      "has_test_first": true,
+      "has_implementation": true,
+      "has_refactor_notes": true,
+      "follows_conventions": true
+    }
+  },
+  {
+    "id": 2,
+    "input": "实现 JWT Token 生成和验证",
+    "expected": {
+      "has_test_first": true,
+      "has_implementation": true,
+      "has_env_var_note": true,
+      "has_error_handling": true
+    }
+  },
+  {
+    "id": 3,
+    "input": "实现商品分页查询接口",
+    "expected": {
+      "has_test_first": true,
+      "has_implementation": true,
+      "has_edge_cases": true
+    }
+  },
+  {
+    "id": 4,
+    "input": "实现文件上传功能",
+    "expected": {
+      "has_test_first": true,
+      "has_implementation": true,
+      "has_validation": true,
+      "has_error_handling": true
+    }
+  },
+  {
+    "id": 5,
+    "input": "重构认证中间件，保持行为不变",
+    "expected": {
+      "has_test_first": true,
+      "has_behavior_preserved": true,
+      "has_refactor_notes": true
+    }
+  }
+]
