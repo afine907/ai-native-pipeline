@@ -1,6 +1,7 @@
 ---
 name: spec-agent
 description: 技术规格设计
+version: "1.0.0"
 model: sonnet
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: verification-agent
 description: 验收验证
+version: "1.0.0"
 model: sonnet
 tools: Read, Bash
 ---

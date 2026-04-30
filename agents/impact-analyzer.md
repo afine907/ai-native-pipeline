@@ -1,6 +1,7 @@
 ---
 name: impact-analyzer
 description: 代码影响分析
+version: "1.0.0"
 model: sonnet
 tools: Read, Bash, Grep
 ---
