@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "input": "在用户模块增加手机号登录功能",
+    "expected": {
+      "has_scope": true,
+      "has_acceptance_criteria": true,
+      "has_priority": true,
+      "has_out_of_scope": true
+    }
+  },
+  {
+    "id": 2,
+    "input": "将登录模块从 session 改为 JWT",
+    "expected": {
+      "has_scope": true,
+      "has_acceptance_criteria": true,
+      "has_risk_mitigation": true,
+      "has_backward_compatibility": true
+    }
+  },
+  {
+    "id": 3,
+    "input": "添加商品列表分页功能",
+    "expected": {
+      "has_scope": true,
+      "has_acceptance_criteria": true,
+      "has_priority": true
+    }
+  },
+  {
+    "id": 4,
+    "input": "修复用户注册时邮箱验证失败的 bug",
+    "expected": {
+      "has_reproduce_steps": true,
+      "has_regression_test": true,
+      "has_scope": true
+    }
+  },
+  {
+    "id": 5,
+    "input": "优化首页加载速度，目标从 3s 降到 1s 以内",
+    "expected": {
+      "has_performance_metrics": true,
+      "has_baseline": true,
+      "has_acceptance_criteria": true,
+      "has_tradeoffs": true
+    }
+  }
+]

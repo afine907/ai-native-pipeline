@@ -1,6 +1,7 @@
 ---
 name: prd-agent
 description: 需求分析
+version: "1.0.0"
 model: sonnet
 ---
 

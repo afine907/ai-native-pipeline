@@ -1,6 +1,7 @@
 ---
 name: coding-agent
 description: 代码实现（TDD）
+version: "1.0.0"
 model: sonnet
 tools: Read, Write, Edit, Bash
 ---

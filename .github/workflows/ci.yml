@@ -25,10 +25,25 @@ jobs:
         run: |
           pip install ruff
       
-      - name: Run Ruff (warning only)
+      - name: Run Ruff (all files, warn)
         run: |
           ruff check scripts/ --ignore E501,F401 || true
-          echo "✅ Lint check completed"
+          echo "✅ Full lint check completed"
+
+      - name: Run Ruff (changed files, enforce)
+        if: github.event_name == 'pull_request'
+        run: |
+          # 获取 PR 中变更的 Python 文件
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD -- '*.py' | tr '\n' ' ')
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed Python files, skipping strict lint"
+            exit 0
+          fi
+          
+          echo "Strict lint on changed files: $CHANGED_FILES"
+          ruff check $CHANGED_FILES --ignore E501,F401
+          echo "✅ Strict lint passed"
 
   test:
     name: Tests
@@ -51,6 +66,7 @@ jobs:
       
       - name: Verify scripts syntax
         run: |
+          python -m py_compile scripts/evaluate_agent.py
           python -m py_compile scripts/evaluate_interactive.py
           python -m py_compile scripts/evaluate_llm_judge.py
           python -m py_compile scripts/run_agent_auto.py
