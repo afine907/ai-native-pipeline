@@ -47,7 +47,6 @@ jobs:
           PYEOF
       - name: Run impact-analyzer
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        env:
         working-directory: /tmp/test-project
         run: |
           claude --bare \
@@ -89,7 +88,6 @@ jobs:
           PYEOF
       - name: Run agent
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        env:
         working-directory: /tmp/eval-project
         run: |
           claude --bare \
@@ -120,7 +118,6 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Run agent
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        env:
         working-directory: /tmp
         run: |
           claude --bare \
