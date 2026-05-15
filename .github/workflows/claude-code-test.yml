@@ -53,7 +53,7 @@ jobs:
             --plugin-dir ${{ github.workspace }} \
             -p "/impact-analyzer 为用户添加手机号登录功能" \
             --allowedTools "Read,Bash,Grep" \
-            --output-format json --timeout 120000 \
+            --output-format json \
             > output.json 2>&1 || true
       - name: Upload results
         if: env.ANTHROPIC_AUTH_TOKEN != '' && always()
@@ -94,7 +94,7 @@ jobs:
             --plugin-dir ${{ github.workspace }} \
             -p "/impact-analyzer 分析在用户模型中增加 email 验证功能的影响范围" \
             --allowedTools "Read,Bash,Grep" \
-            --output-format json --timeout 180000 \
+            --output-format json \
             > impact-output.json 2>&1 || true
       - name: Upload results
         uses: actions/upload-artifact@v4
@@ -124,7 +124,7 @@ jobs:
             --plugin-dir ${{ github.workspace }} \
             -p "/prd-agent 用户需要手机号登录功能，使用手机号+验证码方式" \
             --allowedTools "Read,Bash" \
-            --output-format json --timeout 180000 \
+            --output-format json \
             > prd-output.json 2>&1 || true
       - name: Upload results
         uses: actions/upload-artifact@v4
