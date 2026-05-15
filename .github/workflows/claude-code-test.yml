@@ -51,13 +51,13 @@ jobs:
           claude -p "请阅读 agents/impact-analyzer.md，然后按 impact-analyzer 的角色分析影响范围：为用户添加手机号登录功能" \
             --allowedTools "Read,Bash,Grep" \
             --output-format json \
-            > output.json 2>&1 || true
+            > /tmp/output.json 2>&1 || true
       - name: Upload results
         if: env.ANTHROPIC_AUTH_TOKEN != '' && always()
         uses: actions/upload-artifact@v4
         with:
           name: claude-code-smoke-test
-          path: /tmp/test-project/output.json
+          path: /tmp/output.json
           retention-days: 7
 
   eval-impact:
@@ -89,12 +89,12 @@ jobs:
           claude -p "请阅读 agents/impact-analyzer.md，然后按 impact-analyzer 角色分析：在用户模型中增加 email 验证功能的影响范围" \
             --allowedTools "Read,Bash,Grep" \
             --output-format json \
-            > impact-output.json 2>&1 || true
+            > /tmp/impact-output.json 2>&1 || true
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: claude-code-eval-impact
-          path: /tmp/eval-project/impact-output.json
+          path: /tmp/impact-output.json
           retention-days: 14
 
   eval-prd:
@@ -116,7 +116,7 @@ jobs:
           claude -p "请阅读 agents/prd-agent.md，然后按 prd-agent 角色输出需求分析：用户需要手机号登录功能，使用手机号+验证码方式" \
             --allowedTools "Read,Bash" \
             --output-format json \
-            > prd-output.json 2>&1 || true
+            > /tmp/prd-output.json 2>&1 || true
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
