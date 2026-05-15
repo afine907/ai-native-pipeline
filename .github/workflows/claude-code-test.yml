@@ -47,9 +47,8 @@ jobs:
           PYEOF
       - name: Run impact-analyzer
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        working-directory: /tmp/test-project
         run: |
-          claude --plugin-dir ${{ github.workspace }} -p "/impact-analyzer 为用户添加手机号登录功能" \
+          claude -p "请阅读 agents/impact-analyzer.md，然后按 impact-analyzer 的角色分析影响范围：为用户添加手机号登录功能" \
             --allowedTools "Read,Bash,Grep" \
             --output-format json \
             > output.json 2>&1 || true
@@ -86,9 +85,8 @@ jobs:
           PYEOF
       - name: Run agent
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        working-directory: /tmp/eval-project
         run: |
-          claude --plugin-dir ${{ github.workspace }} -p "/impact-analyzer 分析在用户模型中增加 email 验证功能的影响范围" \
+          claude -p "请阅读 agents/impact-analyzer.md，然后按 impact-analyzer 角色分析：在用户模型中增加 email 验证功能的影响范围" \
             --allowedTools "Read,Bash,Grep" \
             --output-format json \
             > impact-output.json 2>&1 || true
@@ -114,9 +112,8 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Run agent
         if: env.ANTHROPIC_AUTH_TOKEN != ''
-        working-directory: /tmp
         run: |
-          claude --plugin-dir ${{ github.workspace }} -p "/prd-agent 用户需要手机号登录功能，使用手机号+验证码方式" \
+          claude -p "请阅读 agents/prd-agent.md，然后按 prd-agent 角色输出需求分析：用户需要手机号登录功能，使用手机号+验证码方式" \
             --allowedTools "Read,Bash" \
             --output-format json \
             > prd-output.json 2>&1 || true
