@@ -271,9 +271,6 @@ ai-native-pipeline/
 │   ├── backend-coding-standards.md
 │   └── ...
 │
-├── wiki/                      # 文档
-│   └── harness-engine-upgrade-prd.md
-│
 └── .claude-plugin/
     └── plugin.json
 ```
