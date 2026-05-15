@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/afine907/ai-native-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/afine907/ai-native-pipeline/actions/workflows/ci.yml)
 [![Agent Evaluation](https://github.com/afine907/ai-native-pipeline/actions/workflows/evaluate.yml/badge.svg)](https://github.com/afine907/ai-native-pipeline/actions/workflows/evaluate.yml)
+[![Claude Code Integration](https://github.com/afine907/ai-native-pipeline/actions/workflows/claude-code-test.yml/badge.svg)](https://github.com/afine907/ai-native-pipeline/actions/workflows/claude-code-test.yml)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://claude.com/claude-code)
 [![Harness Engine](https://img.shields.io/badge/Harness-Engine-purple)](https://openai.com/index/harness-engineering/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

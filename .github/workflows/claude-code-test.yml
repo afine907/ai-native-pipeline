@@ -1,0 +1,150 @@
+name: Claude Code Integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'agents/*.md'
+      - 'skills/**/*.md'
+      - 'rules/*.md'
+      - '.claude-plugin/**'
+      - '.github/workflows/claude-code-test.yml'
+  push:
+    paths:
+      - 'agents/*.md'
+      - 'skills/**/*.md'
+      - '.github/workflows/claude-code-test.yml'
+
+env:
+  ANTHROPIC_AUTH_TOKEN: ${{ secrets.LONGCAT_API_KEY }}
+  ANTHROPIC_BASE_URL: https://api.longcat.chat/anthropic
+  ANTHROPIC_MODEL: LongCat-Flash-Chat
+  ANTHROPIC_SMALL_FAST_MODEL: LongCat-Flash-Chat
+
+jobs:
+  smoke-test:
+    name: Plugin Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code && claude --version
+      - name: Create test project
+        run: |
+          mkdir -p /tmp/test-project/src/auth
+          cat > /tmp/test-project/src/auth/session.py << 'PYEOF'
+          class SessionManager:
+              def create(self, user_id):
+                  return f"session_{user_id}"
+              def verify(self, token):
+                  return {"user_id": int(token.split('_')[1]), "valid": True}
+          PYEOF
+      - name: Run impact-analyzer
+        if: env.ANTHROPIC_AUTH_TOKEN != ''
+        env:
+        working-directory: /tmp/test-project
+        run: |
+          claude --bare \
+            --plugin-dir ${{ github.workspace }} \
+            -p "/impact-analyzer 为用户添加手机号登录功能" \
+            --allowedTools "Read,Bash,Grep" \
+            --output-format json --timeout 120000 \
+            > output.json 2>&1 || true
+      - name: Upload results
+        if: env.ANTHROPIC_AUTH_TOKEN != '' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-code-smoke-test
+          path: /tmp/test-project/output.json
+          retention-days: 7
+
+  eval-impact:
+    name: Eval impact-analyzer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: smoke-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Create test project
+        run: |
+          mkdir -p /tmp/eval-project/src/auth
+          cat > /tmp/eval-project/src/auth/session.py << 'PYEOF'
+          class SessionManager:
+              def create(self, user_id):
+                  return f"session_{user_id}"
+              def verify(self, token):
+                  return {"user_id": int(token.split('_')[1]), "valid": True}
+          PYEOF
+      - name: Run agent
+        if: env.ANTHROPIC_AUTH_TOKEN != ''
+        env:
+        working-directory: /tmp/eval-project
+        run: |
+          claude --bare \
+            --plugin-dir ${{ github.workspace }} \
+            -p "/impact-analyzer 分析在用户模型中增加 email 验证功能的影响范围" \
+            --allowedTools "Read,Bash,Grep" \
+            --output-format json --timeout 180000 \
+            > impact-output.json 2>&1 || true
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-code-eval-impact
+          path: /tmp/eval-project/impact-output.json
+          retention-days: 14
+
+  eval-prd:
+    name: Eval prd-agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: smoke-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Run agent
+        if: env.ANTHROPIC_AUTH_TOKEN != ''
+        env:
+        working-directory: /tmp
+        run: |
+          claude --bare \
+            --plugin-dir ${{ github.workspace }} \
+            -p "/prd-agent 用户需要手机号登录功能，使用手机号+验证码方式" \
+            --allowedTools "Read,Bash" \
+            --output-format json --timeout 180000 \
+            > prd-output.json 2>&1 || true
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-code-eval-prd
+          path: /tmp/prd-output.json
+          retention-days: 14
+
+  notify:
+    name: Integration Report
+    runs-on: ubuntu-latest
+    needs: [smoke-test, eval-impact, eval-prd]
+    if: always()
+    steps:
+      - name: Report
+        run: |
+          echo "## Claude Code Integration Results" >> $GITHUB_STEP_SUMMARY
+          echo "Smoke: ${{ needs.smoke-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "Impact: ${{ needs.eval-impact.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "PRD: ${{ needs.eval-prd.result }}" >> $GITHUB_STEP_SUMMARY
