@@ -2,12 +2,14 @@
 AI Native Pipeline TUI - Main Application
 基于 Textual 的交互式终端 UI
 """
+import os
+import asyncio
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Header, Footer, Static, Button, Input, Log
 from textual.binding import Binding
 from textual import work
-import asyncio
 
 
 # Agent 列表 (从 skills 目录动态加载)
@@ -211,6 +213,7 @@ class AIPipelineTUI(App):
     def __init__(self):
         super().__init__()
         self.current_agent = None
+        self._running_tasks: list[asyncio.Task] = []
     
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -364,18 +367,20 @@ class AIPipelineTUI(App):
         
         # 检查 skill 文件是否存在
         skill_path = f"skills/{skill}/SKILL.md"
-        import os
         if os.path.exists(skill_path):
             log.write_line(f"  ✅ Skill 文件: {skill_path}")
-            # 模拟执行
-            async def simulate_skill():
-                await asyncio.sleep(0.5)
-                log.write_line(f"  ✅ {skill_display.get(skill, skill)} 完成")
-                status.update_status("就绪")
-            asyncio.create_task(simulate_skill())
+            # 使用 worker 装饰器执行异步任务
+            self._run_skill_worker(skill, skill_display, log, status)
         else:
             log.write_line(f"  ❌ Skill 文件不存在: {skill_path}")
             status.update_status("就绪")
+    
+    @work(exclusive=True)
+    async def _run_skill_worker(self, skill: str, skill_display: dict, log: Log, status: StatusBar):
+        """Worker for skill execution"""
+        await asyncio.sleep(0.5)
+        log.write_line(f"  ✅ {skill_display.get(skill, skill)} 完成")
+        status.update_status("就绪")
     
     def run_agent(self, agent: str, arg: str, log: Log, status: StatusBar):
         """运行单个 Agent"""
@@ -393,14 +398,16 @@ class AIPipelineTUI(App):
         agent_widget = self.query_one(f"#agent-{agent}", Static)
         agent_widget.update(f"🔄 {agent_display.get(agent, agent)}")
         
-        # 模拟 Agent 执行
-        async def simulate_agent():
-            await asyncio.sleep(1)
-            log.write_line(f"  ✓ {agent_display.get(agent, agent)} 完成")
-            agent_widget.update(f"✅ {agent_display.get(agent, agent)}")
-            status.update_status("就绪")
-        
-        asyncio.create_task(simulate_agent())
+        # 使用 worker 装饰器执行异步任务
+        self._run_agent_worker(agent, agent_display, agent_widget, log, status)
+    
+    @work(exclusive=True)
+    async def _run_agent_worker(self, agent: str, agent_display: dict, agent_widget: Static, log: Log, status: StatusBar):
+        """Worker for agent execution"""
+        await asyncio.sleep(1)
+        log.write_line(f"  ✓ {agent_display.get(agent, agent)} 完成")
+        agent_widget.update(f"✅ {agent_display.get(agent, agent)}")
+        status.update_status("就绪")
     
     def run_pipeline(self, requirement: str, log: Log, status: StatusBar):
         """运行完整流水线"""
@@ -413,22 +420,24 @@ class AIPipelineTUI(App):
         log.write_line(f"\n🚀 启动完整流水线...")
         log.write_line(f"📝 需求: {requirement}")
         
-        # 依次运行 Agent
-        async def run_pipeline_async():
-            for agent_id, label in AGENTS:
-                log.write_line(f"\n🔄 运行 {label}...")
-                status.update_status(f"执行中: {label}")
-                
-                # 模拟执行
-                await asyncio.sleep(0.8)
-                log.write_line(f"  ✓ {label} 完成")
-                
-                await asyncio.sleep(0.3)
+        # 使用 worker 装饰器执行流水线
+        self._run_pipeline_worker(requirement, log, status)
+    
+    @work(exclusive=True)
+    async def _run_pipeline_worker(self, requirement: str, log: Log, status: StatusBar):
+        """Worker for pipeline execution"""
+        for agent_id, label in AGENTS:
+            log.write_line(f"\n🔄 运行 {label}...")
+            status.update_status(f"执行中: {label}")
             
-            log.write_line("\n🎉 流水线执行完成!")
-            status.update_status("就绪")
+            # 模拟执行
+            await asyncio.sleep(0.8)
+            log.write_line(f"  ✓ {label} 完成")
+            
+            await asyncio.sleep(0.3)
         
-        asyncio.create_task(run_pipeline_async())
+        log.write_line("\n🎉 流水线执行完成!")
+        status.update_status("就绪")
     
     def action_cancel(self):
         """取消当前任务"""
